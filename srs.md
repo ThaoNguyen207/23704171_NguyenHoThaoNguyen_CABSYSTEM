@@ -83,14 +83,13 @@ Ma trận Stakeholder được xây dựng dựa trên hai tiêu chí:
 | Ảnh hưởng thấp – Quan trọng cao | Thường xuyên cập nhật và thu thập phản hồi |
 | Ảnh hưởng thấp – Quan trọng thấp | Theo dõi và cập nhật khi cần |
 
-### Stakeholder Matrix
+### Biểu đồ Stakeholder Matrix
 
 ```mermaid
 quadrantChart
     title Stakeholder Matrix - CAB System
     x-axis "Ảnh hưởng thấp" --> "Ảnh hưởng cao"
     y-axis "Tầm quan trọng thấp" --> "Tầm quan trọng cao"
-
     quadrant-1 "Quản lý chặt chẽ"
     quadrant-2 "Cập nhật thường xuyên"
     quadrant-3 "Theo dõi"
