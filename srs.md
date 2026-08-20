@@ -1,3 +1,7 @@
+# CAB SYSTEM – PHÂN TÍCH YÊU CẦU
+
+---
+
 # BƯỚC 1: PHÂN TÍCH YÊU CẦU KHÁCH HÀNG
 
 ## 1. Business Context – Bối cảnh nghiệp vụ
@@ -43,6 +47,7 @@ Doanh nghiệp mong muốn có thể bổ sung các loại dịch vụ mới,
 phương thức thanh toán mới và các kênh thông báo mới mà không phải
 xây dựng lại toàn bộ hệ thống.
 
+---
 
 # BƯỚC 2: XÁC ĐỊNH VÀ PHÂN TÍCH STAKEHOLDER
 
@@ -85,6 +90,7 @@ quadrantChart
     title Stakeholder Matrix - CAB System
     x-axis "Ảnh hưởng thấp" --> "Ảnh hưởng cao"
     y-axis "Tầm quan trọng thấp" --> "Tầm quan trọng cao"
+
     quadrant-1 "Quản lý chặt chẽ"
     quadrant-2 "Cập nhật thường xuyên"
     quadrant-3 "Theo dõi"
@@ -198,3 +204,189 @@ Trong thời gian 7 tuần, MVP tập trung vào quy trình nghiệp vụ chính
 
 **Đặt xe → Tìm tài xế → Nhận chuyến → Thực hiện chuyến
 → Hoàn thành → Tính cước → Thanh toán → Đánh giá**
+# BƯỚC 4: XÁC ĐỊNH PHẠM VI YÊU CẦU (SCOPE)
+
+## 4.1. Mục tiêu xác định phạm vi
+
+Xác định rõ các chức năng cần xây dựng trong phiên bản MVP của CAB System
+nhằm đảm bảo nhóm tập trung vào các nghiệp vụ cốt lõi, tránh phát triển
+những chức năng chưa cần thiết hoặc vượt quá thời gian 7 tuần.
+
+Phạm vi được chia thành:
+
+- **In Scope:** Các chức năng cần triển khai trong MVP.
+- **Out of Scope:** Các chức năng chưa triển khai trong MVP nhưng có thể
+  xem xét ở các phiên bản sau.
+
+---
+
+## 4.2. Phạm vi chức năng của MVP
+
+| STT | Module | Chức năng chính | Phạm vi MVP |
+|---|---|---|---|
+| 1 | Quản lý khách hàng | Đăng ký, đăng nhập, cập nhật thông tin cá nhân | In Scope |
+| 2 | Quản lý khách hàng | Đặt xe, nhập điểm đón và điểm đến, chọn loại xe | In Scope |
+| 3 | Quản lý khách hàng | Theo dõi trạng thái chuyến đi | In Scope |
+| 4 | Quản lý khách hàng | Xem lịch sử chuyến đi | In Scope |
+| 5 | Quản lý khách hàng | Xem chi phí và trạng thái thanh toán | In Scope |
+| 6 | Quản lý khách hàng | Đánh giá tài xế | In Scope |
+| 7 | Quản lý tài xế | Đăng nhập và quản lý hồ sơ | In Scope |
+| 8 | Quản lý tài xế | Quản lý thông tin phương tiện | In Scope |
+| 9 | Quản lý tài xế | Chuyển trạng thái sẵn sàng/không sẵn sàng | In Scope |
+| 10 | Quản lý tài xế | Nhận thông báo chuyến mới | In Scope |
+| 11 | Quản lý tài xế | Chấp nhận/từ chối chuyến | In Scope |
+| 12 | Quản lý tài xế | Cập nhật trạng thái chuyến | In Scope |
+| 13 | Quản lý chuyến đi | Tạo và quản lý yêu cầu đặt xe | In Scope |
+| 14 | Quản lý chuyến đi | Tìm và phân công tài xế | In Scope |
+| 15 | Quản lý chuyến đi | Xử lý trường hợp tài xế từ chối/không phản hồi | In Scope |
+| 16 | Quản lý chuyến đi | Cập nhật trạng thái chuyến | In Scope |
+| 17 | Tính cước | Tính số tiền khách hàng phải trả | In Scope |
+| 18 | Thanh toán | Thanh toán tiền mặt | In Scope |
+| 19 | Thanh toán | Thanh toán điện tử mô phỏng | In Scope |
+| 20 | Thông báo | Thông báo các sự kiện chính của chuyến đi | In Scope |
+| 21 | Quản lý vận hành | Quản lý khách hàng | In Scope |
+| 22 | Quản lý vận hành | Quản lý tài xế | In Scope |
+| 23 | Quản lý vận hành | Quản lý phương tiện | In Scope |
+| 24 | Quản lý vận hành | Theo dõi các chuyến đang diễn ra | In Scope |
+| 25 | Quản lý vận hành | Tra cứu lịch sử chuyến đi/giao dịch | In Scope |
+| 26 | Quản lý tài khoản | Phân quyền nhân viên vận hành | In Scope |
+
+---
+
+## 4.3. Các chức năng Out of Scope
+
+Các chức năng sau chưa triển khai trong phiên bản MVP do thời gian
+xây dựng giới hạn 7 tuần:
+
+| STT | Chức năng | Lý do chưa triển khai |
+|---|---|---|
+| 1 | Định vị GPS realtime chính xác | Phức tạp, không cần thiết để chứng minh MVP |
+| 2 | Thuật toán tối ưu phân công tài xế nâng cao | Có thể phát triển sau khi MVP hoạt động |
+| 3 | Tích hợp nhiều nhà cung cấp thanh toán thật | MVP chỉ cần mô phỏng thanh toán điện tử |
+| 4 | Tích hợp SMS/Email/Zalo thực tế | MVP có thể sử dụng thông báo trong hệ thống |
+| 5 | Báo cáo BI nâng cao | Chưa phải chức năng cốt lõi của MVP |
+| 6 | Hệ thống định giá/cước phức tạp | MVP sử dụng quy tắc tính cước cơ bản |
+| 7 | Quản lý nhiều loại dịch vụ phức tạp | Chưa cần thiết trong phiên bản demo |
+| 8 | Hệ thống xử lý tải lớn thực tế | Chỉ thiết kế theo hướng có khả năng mở rộng |
+| 9 | Theo dõi vị trí tài xế theo thời gian thực | Có thể triển khai ở phiên bản sau |
+| 10 | Tích hợp nhiều kênh thông báo | Để dành cho phiên bản mở rộng |
+
+---
+
+## 4.4. Xác định các Module của hệ thống
+
+MVP CAB System được chia thành các module chính:
+
+### Module 1 – Quản lý khách hàng
+
+Bao gồm:
+- Đăng ký / đăng nhập.
+- Quản lý thông tin cá nhân.
+- Đặt xe.
+- Theo dõi chuyến.
+- Xem lịch sử.
+- Đánh giá tài xế.
+
+### Module 2 – Quản lý tài xế
+
+Bao gồm:
+- Đăng nhập.
+- Quản lý hồ sơ.
+- Quản lý phương tiện.
+- Cập nhật trạng thái hoạt động.
+- Nhận và xử lý yêu cầu chuyến.
+- Cập nhật trạng thái chuyến.
+
+### Module 3 – Quản lý chuyến đi
+
+Bao gồm:
+- Tạo yêu cầu đặt xe.
+- Tìm tài xế.
+- Phân công tài xế.
+- Xử lý tài xế từ chối/không phản hồi.
+- Theo dõi trạng thái chuyến.
+- Hoàn thành chuyến.
+
+### Module 4 – Tính cước và thanh toán
+
+Bao gồm:
+- Tính cước.
+- Thanh toán tiền mặt.
+- Thanh toán điện tử mô phỏng.
+- Cập nhật trạng thái thanh toán.
+
+### Module 5 – Thông báo
+
+Bao gồm:
+- Thông báo đặt xe.
+- Thông báo tài xế nhận chuyến.
+- Thông báo tài xế đến.
+- Thông báo hoàn thành chuyến.
+- Thông báo kết quả thanh toán.
+
+### Module 6 – Quản lý vận hành
+
+Bao gồm:
+- Quản lý khách hàng.
+- Quản lý tài xế.
+- Quản lý phương tiện.
+- Theo dõi chuyến đi.
+- Tra cứu giao dịch.
+- Xử lý chuyến bị lỗi.
+
+### Module 7 – Quản lý tài khoản và phân quyền
+
+Bao gồm:
+- Đăng nhập.
+- Phân quyền khách hàng.
+- Phân quyền tài xế.
+- Phân quyền nhân viên vận hành.
+
+---
+
+## 4.5. MVP Boundary
+
+### In Scope – Tiếp tục triển khai
+
+Các chức năng thuộc luồng nghiệp vụ chính:
+
+**Khách hàng**
+→ Đặt xe
+→ Hệ thống tìm tài xế
+→ Tài xế nhận chuyến
+→ Tài xế thực hiện chuyến
+→ Hoàn thành
+→ Tính cước
+→ Thanh toán
+→ Đánh giá.
+
+Đồng thời triển khai các chức năng quản trị cơ bản:
+
+**Quản lý khách hàng + Quản lý tài xế + Quản lý phương tiện
++ Quản lý chuyến đi + Tra cứu thanh toán.**
+
+### Out of Scope – Không triển khai trong MVP
+
+Các chức năng nâng cao như:
+
+**GPS realtime + tích hợp thanh toán thật nhiều nhà cung cấp
++ SMS/Email/Zalo thật + thuật toán phân công nâng cao
++ báo cáo BI nâng cao + định giá phức tạp.**
+
+Các chức năng Out of Scope có thể được xem xét và triển khai
+ở các phiên bản tiếp theo.
+
+---
+
+## 4.6. Kết luận phạm vi
+
+Phạm vi MVP tập trung vào việc chứng minh quy trình nghiệp vụ cốt lõi
+của CAB System và các chức năng quản lý cần thiết.
+
+Mọi chức năng không phục vụ trực tiếp cho quy trình:
+
+**Đặt xe → Tìm tài xế → Nhận chuyến → Thực hiện chuyến
+→ Hoàn thành → Thanh toán → Đánh giá**
+
+hoặc không cần thiết cho việc quản lý vận hành cơ bản sẽ được xem xét
+đưa ra ngoài phạm vi MVP.
