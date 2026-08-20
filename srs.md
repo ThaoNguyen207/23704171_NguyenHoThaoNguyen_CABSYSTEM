@@ -12,14 +12,6 @@ xây dựng một nền tảng CAB mới có khả năng hỗ trợ quy trình �
 quản lý tài xế, thanh toán và vận hành một cách tập trung, đồng thời có
 khả năng mở rộng trong tương lai.
 
-### Các bên liên quan chính
-
-- Khách hàng: Đặt xe và sử dụng dịch vụ.
-- Tài xế: Nhận và thực hiện chuyến xe.
-- Nhân viên vận hành: Quản lý khách hàng, tài xế, phương tiện và chuyến đi.
-- Nhà cung cấp thanh toán: Hỗ trợ thanh toán điện tử.
-- Ban lãnh đạo: Theo dõi hoạt động và báo cáo kinh doanh.
-
 ---
 
 ## 2. Business Problem – Vấn đề nghiệp vụ
@@ -51,26 +43,7 @@ Doanh nghiệp mong muốn có thể bổ sung các loại dịch vụ mới,
 phương thức thanh toán mới và các kênh thông báo mới mà không phải
 xây dựng lại toàn bộ hệ thống.
 
----
 
-## 3. Business Goal – Mục tiêu nghiệp vụ
-
-Xây dựng một nền tảng CAB có khả năng:
-
-- Hỗ trợ khách hàng đặt xe trực tuyến.
-- Tự động tìm và phân công tài xế phù hợp.
-- Cho phép khách hàng theo dõi trạng thái chuyến đi.
-- Quản lý tập trung thông tin chuyến đi và thanh toán.
-- Hỗ trợ nhân viên vận hành quản lý hoạt động.
-- Đảm bảo hệ thống có khả năng mở rộng trong tương lai.
-
-### Mục tiêu của phiên bản MVP
-
-Trong phạm vi 7 tuần, nhóm xây dựng phiên bản MVP nhằm demo
-quy trình nghiệp vụ cốt lõi:
-
-**Đặt xe → Tìm tài xế → Tài xế nhận chuyến → Thực hiện chuyến
-→ Hoàn thành → Tính cước → Thanh toán → Đánh giá**
 # BƯỚC 2: XÁC ĐỊNH VÀ PHÂN TÍCH STAKEHOLDER
 
 ## 1. Danh sách Stakeholder
@@ -124,3 +97,104 @@ quadrantChart
     "Bộ phận phát triển": [0.70, 0.75]
     "Nhà cung cấp thanh toán": [0.45, 0.55]
     "Nhà cung cấp thông báo": [0.30, 0.40]
+# BƯỚC 3: XÁC ĐỊNH BUSINESS GOAL VÀ BUSINESS REQUIREMENT
+
+## 3.1. Xác định Business Goal
+
+Dựa trên Business Problem và các Stakeholder đã xác định, hệ thống CAB
+cần đạt được các mục tiêu nghiệp vụ chính:
+
+- Giảm thời gian tìm và phân công tài xế.
+- Hỗ trợ khách hàng đặt xe và theo dõi chuyến đi.
+- Hỗ trợ nhiều phương thức thanh toán.
+- Quản lý tập trung thông tin chuyến đi và giao dịch.
+- Hỗ trợ nhân viên vận hành quản lý hệ thống.
+- Cung cấp thông báo kịp thời.
+- Có khả năng mở rộng trong tương lai.
+
+---
+
+## 3.2. Xác định Business Requirement
+
+### BR01 – Giảm thời gian tìm tài xế
+
+Hệ thống tự động tìm tài xế phù hợp dựa trên vị trí và trạng thái
+sẵn sàng của tài xế.
+
+- Ưu tiên tài xế phù hợp và gần khách hàng.
+- Nếu tài xế từ chối hoặc không phản hồi, hệ thống tiếp tục tìm tài xế khác.
+- Nếu không tìm được tài xế, thông báo cho khách hàng.
+
+### BR02 – Hỗ trợ thanh toán
+
+Hệ thống cho phép khách hàng thanh toán bằng:
+
+- Tiền mặt.
+- Thanh toán điện tử thông qua nhà cung cấp thanh toán bên ngoài.
+
+### BR03 – Theo dõi chuyến đi
+
+Khách hàng có thể theo dõi trạng thái chuyến đi:
+
+**Đang tìm tài xế → Đã có tài xế → Tài xế đã đến → Đã đón khách
+→ Đang di chuyển → Hoàn thành**
+
+### BR04 – Quản lý thông tin chuyến đi
+
+Hệ thống quản lý tập trung:
+
+- Khách hàng.
+- Tài xế.
+- Phương tiện.
+- Điểm đón, điểm đến.
+- Trạng thái chuyến.
+- Chi phí.
+- Thanh toán.
+- Lịch sử chuyến đi.
+
+### BR05 – Hỗ trợ nhân viên vận hành
+
+Nhân viên vận hành có thể:
+
+- Quản lý khách hàng.
+- Quản lý tài xế.
+- Quản lý phương tiện.
+- Theo dõi chuyến đang diễn ra.
+- Kiểm tra trạng thái tài xế.
+- Xử lý các trường hợp chuyến bị lỗi.
+- Tra cứu giao dịch.
+
+### BR06 – Hỗ trợ thông báo
+
+Hệ thống thông báo cho khách hàng và tài xế khi:
+
+- Yêu cầu đặt xe được tiếp nhận.
+- Tài xế nhận chuyến.
+- Tài xế đến điểm đón.
+- Chuyến đi hoàn thành.
+- Thanh toán có kết quả.
+- Có chuyến mới dành cho tài xế.
+
+### BR07 – Đánh giá tài xế
+
+Sau khi chuyến đi hoàn thành, khách hàng có thể đánh giá tài xế.
+
+### BR08 – Khả năng mở rộng
+
+Hệ thống có khả năng bổ sung:
+
+- Loại dịch vụ mới.
+- Phương thức thanh toán mới.
+- Nhà cung cấp thông báo mới.
+- Các thành phần kỹ thuật mới.
+
+Mà không phải xây dựng lại toàn bộ hệ thống.
+
+---
+
+## 3.3. Business Goal cho phiên bản MVP
+
+Trong thời gian 7 tuần, MVP tập trung vào quy trình nghiệp vụ chính:
+
+**Đặt xe → Tìm tài xế → Nhận chuyến → Thực hiện chuyến
+→ Hoàn thành → Tính cước → Thanh toán → Đánh giá**
