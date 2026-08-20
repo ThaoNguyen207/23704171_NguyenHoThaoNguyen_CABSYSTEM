@@ -84,7 +84,6 @@ quy trình nghiệp vụ cốt lõi:
 | Bộ phận phát triển hệ thống | Phân tích, thiết kế, xây dựng, kiểm thử và triển khai hệ thống CAB |
 | Nhà cung cấp thanh toán | Cung cấp dịch vụ thanh toán điện tử và trả kết quả giao dịch cho hệ thống CAB |
 | Nhà cung cấp dịch vụ thông báo | Cung cấp các kênh gửi thông báo như Email, SMS hoặc các kênh khác trong tương lai |
-| Business Analyst | Thu thập, phân tích, làm rõ và xác nhận yêu cầu với các bên liên quan; xác định phạm vi và nghiệp vụ hệ thống |
 
 ---
 
@@ -122,7 +121,6 @@ quadrantChart
     "Nhân viên vận hành": [0.80, 0.90]
     "Khách hàng": [0.65, 0.95]
     "Tài xế": [0.60, 0.85]
-    "Business Analyst": [0.75, 0.80]
     "Bộ phận phát triển": [0.70, 0.75]
     "Nhà cung cấp thanh toán": [0.45, 0.55]
     "Nhà cung cấp thông báo": [0.30, 0.40]
