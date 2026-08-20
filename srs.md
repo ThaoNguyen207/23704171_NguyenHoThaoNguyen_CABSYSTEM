@@ -84,24 +84,28 @@ Ma trận Stakeholder được xây dựng dựa trên hai tiêu chí:
 | Ảnh hưởng thấp – Quan trọng thấp | Theo dõi và cập nhật khi cần |
 
 ### Biểu đồ Stakeholder Matrix
+## 2. Stakeholder Matrix
 
 ```mermaid
 quadrantChart
     title Stakeholder Matrix - CAB System
     x-axis "Ảnh hưởng thấp" --> "Ảnh hưởng cao"
     y-axis "Tầm quan trọng thấp" --> "Tầm quan trọng cao"
+
     quadrant-1 "Quản lý chặt chẽ"
     quadrant-2 "Cập nhật thường xuyên"
     quadrant-3 "Theo dõi"
     quadrant-4 "Duy trì hài lòng"
 
     "Ban giám đốc": [0.90, 0.95]
-    "Nhân viên vận hành": [0.80, 0.90]
     "Khách hàng": [0.65, 0.95]
     "Tài xế": [0.60, 0.85]
+    "Nhân viên vận hành": [0.80, 0.90]
+    "Business Analyst": [0.75, 0.80]
     "Bộ phận phát triển": [0.70, 0.75]
     "Nhà cung cấp thanh toán": [0.45, 0.55]
     "Nhà cung cấp thông báo": [0.30, 0.40]
+```
 # BƯỚC 3: XÁC ĐỊNH BUSINESS GOAL VÀ BUSINESS REQUIREMENT
 
 ## 3.1. Xác định Business Goal
