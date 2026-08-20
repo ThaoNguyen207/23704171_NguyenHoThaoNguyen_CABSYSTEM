@@ -2221,3 +2221,380 @@ PassengerPickedUp
 InProgress
     ↓
 Completed
+```
+
+# BƯỚC 13: XÂY DỰNG ACCEPTANCE CRITERIA (AC)
+
+## 13.1. Khái niệm
+
+**Acceptance Criteria (AC) – Tiêu chí chấp nhận** là tập hợp các điều kiện
+và quy tắc cụ thể mà một chức năng phải đáp ứng để được khách hàng hoặc
+người có trách nhiệm xác nhận là **đã hoàn thành và đạt yêu cầu**.
+
+Acceptance Criteria giúp:
+- Xác định rõ khi nào một yêu cầu được xem là hoàn thành.
+- Làm cơ sở để Developer triển khai chức năng.
+- Làm cơ sở để Tester kiểm thử.
+- Giúp khách hàng xác nhận kết quả.
+- Hạn chế việc hiểu sai yêu cầu.
+
+---
+
+# 13.2. Nguyên tắc xây dựng Acceptance Criteria
+
+Mỗi Acceptance Criteria cần:
+- Rõ ràng, cụ thể.
+- Có thể kiểm tra/kiểm thử được.
+- Không mơ hồ.
+- Phù hợp với Business Requirement và Functional Requirement.
+- Xác định được điều kiện để chức năng được chấp nhận.
+
+Có thể sử dụng cấu trúc:
+
+> **Given** – Trong điều kiện nào?  
+> **When** – Người dùng thực hiện hành động gì?  
+> **Then** – Hệ thống phải phản hồi như thế nào?
+
+---
+
+# 13.3. Acceptance Criteria cho các chức năng chính
+
+## AC01 – Đặt chuyến xe
+
+**Liên quan:** BR01 – Đặt chuyến xe
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC01.1 | Khách hàng phải đăng nhập trước khi đặt chuyến. |
+| AC01.2 | Khách hàng phải cung cấp đầy đủ điểm đón và điểm đến. |
+| AC01.3 | Khách hàng phải chọn loại xe. |
+| AC01.4 | Hệ thống không cho tạo chuyến nếu thông tin bắt buộc bị thiếu. |
+| AC01.5 | Khi thông tin hợp lệ, hệ thống tạo yêu cầu chuyến thành công. |
+| AC01.6 | Sau khi tạo chuyến, trạng thái chuyến được chuyển sang `Đang tìm tài xế`. |
+| AC01.7 | Hệ thống thông báo cho khách hàng rằng yêu cầu đặt chuyến đã được tiếp nhận. |
+
+### Given – When – Then
+
+**Given:** Khách hàng đã đăng nhập và cung cấp đầy đủ thông tin.  
+**When:** Khách hàng nhấn **Đặt chuyến**.  
+**Then:** Hệ thống tạo chuyến và chuyển trạng thái sang
+`Đang tìm tài xế`.
+
+---
+
+# 13.4. AC02 – Tìm tài xế
+
+**Liên quan:** BR01 – Tìm tài xế
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC02.1 | Hệ thống chỉ tìm tài xế đang ở trạng thái sẵn sàng. |
+| AC02.2 | Tài xế phải phù hợp với loại xe khách hàng đã chọn. |
+| AC02.3 | Hệ thống gửi yêu cầu chuyến cho tài xế phù hợp. |
+| AC02.4 | Nếu tài xế từ chối, hệ thống tiếp tục tìm tài xế khác. |
+| AC02.5 | Nếu tài xế không phản hồi trong thời gian quy định, hệ thống chuyển sang tài xế khác. |
+| AC02.6 | Khi tài xế chấp nhận, hệ thống gán tài xế vào chuyến. |
+| AC02.7 | Không được có hai tài xế cùng được xác nhận cho một chuyến. |
+| AC02.8 | Nếu hết thời gian tìm mà không có tài xế, hệ thống thông báo cho khách hàng. |
+
+### Given – When – Then
+
+**Given:** Chuyến đang ở trạng thái `Đang tìm tài xế`.  
+**When:** Hệ thống tìm thấy tài xế phù hợp và gửi yêu cầu.  
+**Then:** Nếu tài xế Accept trong thời gian quy định, tài xế được gán
+vào chuyến.
+
+---
+
+# 13.5. AC03 – Tài xế nhận chuyến
+
+**Liên quan:** BR02 – Nhận chuyến
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC03.1 | Tài xế chỉ nhận được chuyến phù hợp với loại xe của mình. |
+| AC03.2 | Tài xế đang thực hiện chuyến không được nhận chuyến mới. |
+| AC03.3 | Tài xế có thể Accept hoặc Reject yêu cầu chuyến. |
+| AC03.4 | Khi Accept, hệ thống ghi nhận tài xế nhận chuyến. |
+| AC03.5 | Khi Reject, hệ thống ghi nhận lý do nếu có và tiếp tục tìm tài xế khác. |
+| AC03.6 | Sau khi Accept thành công, trạng thái chuyến được cập nhật. |
+
+---
+
+# 13.6. AC04 – Cập nhật trạng thái chuyến
+
+**Liên quan:** BR03 – Theo dõi chuyến đi
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC04.1 | Trạng thái chuyến được cập nhật theo đúng trình tự nghiệp vụ. |
+| AC04.2 | Sau khi tài xế nhận chuyến, trạng thái chuyển sang `Đã có tài xế`. |
+| AC04.3 | Khi tài xế đến điểm đón, trạng thái chuyển sang `Tài xế đã đến`. |
+| AC04.4 | Khi khách hàng lên xe, trạng thái chuyển sang `Đã đón khách`. |
+| AC04.5 | Khi bắt đầu di chuyển, trạng thái chuyển sang `Đang di chuyển`. |
+| AC04.6 | Khi đến điểm đến, trạng thái chuyển sang `Hoàn thành`. |
+| AC04.7 | Khách hàng có thể xem trạng thái hiện tại của chuyến. |
+
+---
+
+# 13.7. AC05 – Tính cước
+
+**Liên quan:** BR04 – Tính cước
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC05.1 | Hệ thống chỉ tính cước khi chuyến hoàn thành. |
+| AC05.2 | Hệ thống áp dụng đúng loại xe của chuyến. |
+| AC05.3 | Hệ thống áp dụng đúng quy tắc tính cước đã được doanh nghiệp xác nhận. |
+| AC05.4 | Số tiền phải thanh toán được lưu cùng thông tin chuyến. |
+| AC05.5 | Khách hàng có thể xem số tiền phải thanh toán. |
+
+---
+
+# 13.8. AC06 – Thanh toán
+
+**Liên quan:** BR05 – Thanh toán
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC06.1 | Khách hàng có thể chọn phương thức thanh toán được hệ thống hỗ trợ. |
+| AC06.2 | Thanh toán tiền mặt được ghi nhận đúng trạng thái. |
+| AC06.3 | Thanh toán điện tử thành công phải được ghi nhận là `Đã thanh toán`. |
+| AC06.4 | Thanh toán điện tử thất bại phải được ghi nhận là `Thanh toán thất bại`. |
+| AC06.5 | Khi thanh toán thất bại, khách hàng được thông báo. |
+| AC06.6 | Hệ thống không được ghi nhận thanh toán thành công khi chưa có kết quả xác nhận. |
+| AC06.7 | Thông tin giao dịch phải được lưu để tra cứu. |
+
+---
+
+# 13.9. AC07 – Đánh giá tài xế
+
+**Liên quan:** BR06 – Đánh giá tài xế
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC07.1 | Chỉ khách hàng đã thực hiện chuyến mới được đánh giá tài xế. |
+| AC07.2 | Chỉ được đánh giá sau khi chuyến hoàn thành. |
+| AC07.3 | Điểm đánh giá phải nằm trong khoảng được hệ thống quy định. |
+| AC07.4 | Khách hàng có thể nhập nhận xét nếu hệ thống hỗ trợ. |
+| AC07.5 | Đánh giá được lưu gắn với đúng chuyến và tài xế. |
+| AC07.6 | Một chuyến không được tạo nhiều đánh giá của cùng một khách hàng. |
+
+---
+
+# 13.10. AC08 – Quản lý khách hàng
+
+**Liên quan:** BR07 – Quản lý khách hàng
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC08.1 | Nhân viên vận hành có thể xem danh sách khách hàng. |
+| AC08.2 | Nhân viên có thể tìm kiếm khách hàng. |
+| AC08.3 | Nhân viên có thể xem thông tin chi tiết khách hàng. |
+| AC08.4 | Nhân viên có thể cập nhật thông tin khách hàng theo quyền được cấp. |
+| AC08.5 | Nhân viên không được truy cập chức năng ngoài quyền hạn. |
+
+---
+
+# 13.11. AC09 – Quản lý tài xế
+
+**Liên quan:** BR08 – Quản lý tài xế
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC09.1 | Nhân viên vận hành có thể xem danh sách tài xế. |
+| AC09.2 | Nhân viên có thể tìm kiếm tài xế. |
+| AC09.3 | Nhân viên có thể xem thông tin chi tiết tài xế. |
+| AC09.4 | Nhân viên có thể cập nhật thông tin tài xế theo quyền. |
+| AC09.5 | Hệ thống hiển thị trạng thái hoạt động của tài xế. |
+| AC09.6 | Tài xế không hoạt động không được hệ thống lựa chọn để nhận chuyến. |
+
+---
+
+# 13.12. AC10 – Quản lý phương tiện
+
+**Liên quan:** BR09 – Quản lý phương tiện
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC10.1 | Nhân viên có thể xem thông tin phương tiện. |
+| AC10.2 | Phương tiện phải được gắn với tài xế phù hợp. |
+| AC10.3 | Phương tiện phải có loại xe xác định. |
+| AC10.4 | Phương tiện không hoạt động không được sử dụng để nhận chuyến. |
+| AC10.5 | Biển số xe không được trùng trong các phương tiện đang hoạt động. |
+
+---
+
+# 13.13. AC11 – Thông báo
+
+**Liên quan:** BR10 – Thông báo
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC11.1 | Khách hàng nhận được thông báo khi yêu cầu đặt chuyến được tiếp nhận. |
+| AC11.2 | Khách hàng nhận được thông báo khi tài xế nhận chuyến. |
+| AC11.3 | Khách hàng nhận được thông báo khi chuyến hoàn thành. |
+| AC11.4 | Khách hàng nhận được thông báo về kết quả thanh toán. |
+| AC11.5 | Tài xế nhận được thông báo khi có yêu cầu chuyến phù hợp. |
+| AC11.6 | Hệ thống lưu lại trạng thái của thông báo. |
+
+---
+
+# 13.14. AC12 – Phân quyền
+
+**Liên quan:** BR11 – Quản lý tài khoản và phân quyền
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC12.1 | Người dùng phải đăng nhập trước khi sử dụng chức năng yêu cầu xác thực. |
+| AC12.2 | Khách hàng chỉ được sử dụng chức năng dành cho khách hàng. |
+| AC12.3 | Tài xế chỉ được sử dụng chức năng dành cho tài xế. |
+| AC12.4 | Nhân viên vận hành được sử dụng các chức năng quản lý theo quyền. |
+| AC12.5 | Người dùng không có quyền phải bị từ chối truy cập. |
+
+---
+
+# 13.15. AC13 – Xử lý ngoại lệ khi tìm tài xế
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC13.1 | Nếu tài xế Reject, hệ thống phải tìm tài xế khác. |
+| AC13.2 | Nếu tài xế không phản hồi hết thời gian quy định, hệ thống phải chuyển sang tài xế khác. |
+| AC13.3 | Tài xế đã Reject không được gửi lại cùng yêu cầu trong lần tìm hiện tại. |
+| AC13.4 | Nếu không còn tài xế phù hợp, hệ thống phải kết thúc quá trình tìm. |
+| AC13.5 | Khách hàng phải được thông báo khi không tìm được tài xế. |
+| AC13.6 | Hệ thống không được gán đồng thời hai tài xế cho cùng một chuyến. |
+
+---
+
+# 13.16. AC14 – Hủy chuyến
+
+| Mã | Điều kiện chấp nhận |
+|---|---|
+| AC14.1 | Khách hàng có thể yêu cầu hủy chuyến theo chính sách của doanh nghiệp. |
+| AC14.2 | Hệ thống kiểm tra trạng thái chuyến trước khi cho phép hủy. |
+| AC14.3 | Khi hủy thành công, trạng thái chuyến chuyển sang `Đã hủy`. |
+| AC14.4 | Hệ thống dừng quá trình tìm tài xế đối với chuyến đã hủy. |
+| AC14.5 | Nếu phát sinh phí hủy, hệ thống phải ghi nhận khoản phí theo chính sách. |
+| AC14.6 | Tài xế phải được thông báo khi chuyến bị hủy. |
+
+---
+
+# 13.17. Bảng tổng hợp Acceptance Criteria
+
+| Mã | Chức năng | Kết quả cần đạt |
+|---|---|---|
+| AC01 | Đặt chuyến | Tạo được chuyến khi thông tin hợp lệ |
+| AC02 | Tìm tài xế | Tìm và gán được tài xế phù hợp |
+| AC03 | Nhận chuyến | Tài xế có thể Accept/Reject |
+| AC04 | Trạng thái chuyến | Trạng thái được cập nhật đúng quy trình |
+| AC05 | Tính cước | Tính đúng số tiền sau khi hoàn thành |
+| AC06 | Thanh toán | Ghi nhận đúng kết quả thanh toán |
+| AC07 | Đánh giá | Khách hàng đánh giá được sau chuyến |
+| AC08 | Quản lý khách hàng | Nhân viên quản lý được khách hàng |
+| AC09 | Quản lý tài xế | Nhân viên quản lý được tài xế |
+| AC10 | Quản lý phương tiện | Quản lý được phương tiện |
+| AC11 | Thông báo | Gửi và lưu được thông báo |
+| AC12 | Phân quyền | Người dùng chỉ truy cập đúng chức năng |
+| AC13 | Xử lý ngoại lệ | Hệ thống xử lý được các trường hợp bất thường |
+| AC14 | Hủy chuyến | Hủy chuyến đúng theo trạng thái và chính sách |
+
+---
+
+# 13.18. Điều kiện hoàn thành yêu cầu
+
+Một Functional Requirement được xem là **đạt yêu cầu** khi:
+
+1. Tất cả Acceptance Criteria tương ứng đều được đáp ứng.
+2. Chức năng hoạt động đúng theo Business Rule.
+3. Các trường hợp Exception quan trọng đã được xử lý.
+4. Dữ liệu được lưu trữ chính xác.
+5. Người dùng thực hiện được đúng chức năng theo quyền.
+6. Khách hàng hoặc người có thẩm quyền xác nhận chức năng đạt yêu cầu.
+
+> **Kết luận:** Acceptance Criteria là cầu nối giữa yêu cầu nghiệp vụ,
+> phát triển phần mềm và kiểm thử. Khi tất cả AC của một yêu cầu đều đạt,
+> yêu cầu đó mới được xem là hoàn thành.
+# BƯỚC 14: REQUIREMENT TRACEABILITY – TRUY XUẤT NGUỒN GỐC YÊU CẦU
+
+## 14.1. Khái niệm
+
+Requirement Traceability (truy xuất nguồn gốc yêu cầu) là quá trình theo dõi
+mối liên hệ của một yêu cầu từ khi được xác định, phân tích, phân rã,
+thiết kế cho đến khi được kiểm tra và xác nhận.
+
+Đối với hệ thống CAB, Requirement Traceability giúp đảm bảo rằng:
+
+- Mỗi yêu cầu nghiệp vụ đều được phân tích và triển khai.
+- Không bỏ sót yêu cầu của khách hàng.
+- Không phát triển các chức năng không xuất phát từ yêu cầu.
+- Các quy tắc nghiệp vụ được áp dụng đúng vào chức năng.
+- Có thể xác định một yêu cầu được thiết kế và kiểm tra như thế nào.
+
+---
+
+# 14.2. Requirement Traceability Matrix – RTM
+
+RTM (Requirement Traceability Matrix) là ma trận dùng để liên kết các
+thành phần của yêu cầu với nhau.
+
+Trong hệ thống CAB, RTM được xây dựng theo chuỗi:
+
+**BR → FR → BRL → UC → AC**
+
+Trong đó:
+
+| Ký hiệu | Thành phần | Ý nghĩa |
+|---|---|---|
+| **BR** | Business Requirement | Yêu cầu nghiệp vụ mà doanh nghiệp cần hệ thống đáp ứng |
+| **FR** | Functional Requirement | Chức năng cụ thể hệ thống phải thực hiện để đáp ứng BR |
+| **BRL** | Business Rule | Quy tắc nghiệp vụ mà chức năng phải tuân thủ |
+| **UC** | Use Case | Mô tả cách Actor tương tác với hệ thống để thực hiện chức năng |
+| **AC** | Acceptance Criteria | Điều kiện để xác định chức năng đã đáp ứng yêu cầu |
+
+---
+
+# 14.3. RTM – CAB System
+
+| BR | FR | BRL | UC | AC |
+|---|---|---|---|---|
+| **BR01 – Đặt chuyến** | **FR01 – Nhập điểm đón và điểm đến** | **BRL01 – Phải có điểm đón và điểm đến** | **UC01 – Đặt chuyến** | **AC01 – Không cho tạo chuyến nếu thiếu điểm đón hoặc điểm đến** |
+| **BR01 – Đặt chuyến** | **FR02 – Chọn loại xe** | **BRL02 – Phải chọn loại xe** | **UC01 – Đặt chuyến** | **AC02 – Khách hàng phải chọn loại xe trước khi gửi yêu cầu** |
+| **BR01 – Đặt chuyến** | **FR03 – Xác nhận yêu cầu đặt chuyến** | **BRL03 – Thông tin đặt chuyến phải hợp lệ** | **UC01 – Đặt chuyến** | **AC03 – Hệ thống tạo chuyến khi thông tin hợp lệ** |
+| **BR02 – Tìm tài xế** | **FR04 – Xác định tài xế phù hợp** | **BRL04 – Chỉ tìm tài xế sẵn sàng** | **UC02 – Tìm tài xế** | **AC04 – Hệ thống chỉ đưa tài xế sẵn sàng vào quá trình tìm kiếm** |
+| **BR02 – Tìm tài xế** | **FR05 – Lọc tài xế theo loại xe** | **BRL05 – Tài xế phải phù hợp với loại xe** | **UC02 – Tìm tài xế** | **AC05 – Hệ thống chỉ gửi yêu cầu cho tài xế có loại xe phù hợp** |
+| **BR02 – Tìm tài xế** | **FR06 – Gửi yêu cầu cho tài xế** | **BRL06 – Một chuyến chỉ được gán một tài xế tại một thời điểm** | **UC02 – Tìm tài xế** | **AC06 – Khi một tài xế Accept, các yêu cầu khác của chuyến được kết thúc** |
+| **BR03 – Nhận chuyến** | **FR07 – Accept/Reject chuyến** | **BRL07 – Tài xế có quyền Accept hoặc Reject** | **UC03 – Nhận chuyến** | **AC07 – Tài xế có thể Accept hoặc Reject yêu cầu chuyến** |
+| **BR03 – Nhận chuyến** | **FR08 – Xử lý tài xế không phản hồi** | **BRL08 – Tài xế phải phản hồi trong thời gian quy định** | **UC03 – Nhận chuyến** | **AC08 – Nếu quá thời gian, hệ thống chuyển sang tài xế khác** |
+| **BR04 – Theo dõi chuyến** | **FR09 – Cập nhật trạng thái chuyến** | **BRL09 – Trạng thái phải được cập nhật theo đúng quy trình** | **UC04 – Theo dõi chuyến** | **AC09 – Trạng thái chuyến được cập nhật đúng theo từng giai đoạn** |
+| **BR05 – Hoàn thành chuyến** | **FR10 – Xác nhận hoàn thành chuyến** | **BRL10 – Chỉ hoàn thành khi chuyến kết thúc** | **UC05 – Hoàn thành chuyến** | **AC10 – Chuyến chỉ chuyển sang Completed khi đủ điều kiện hoàn thành** |
+| **BR06 – Tính cước** | **FR11 – Tính cước chuyến xe** | **BRL11 – Chỉ tính cước khi chuyến hoàn thành** | **UC06 – Tính cước** | **AC11 – Hệ thống tính và lưu số tiền phải thanh toán sau khi chuyến hoàn thành** |
+| **BR07 – Thanh toán** | **FR12 – Thanh toán tiền mặt** | **BRL12 – Hỗ trợ thanh toán tiền mặt** | **UC07 – Thanh toán** | **AC12 – Hệ thống ghi nhận thanh toán tiền mặt thành công** |
+| **BR07 – Thanh toán** | **FR13 – Thanh toán điện tử** | **BRL13 – Thanh toán điện tử phải có kết quả giao dịch** | **UC07 – Thanh toán** | **AC13 – Hệ thống cập nhật trạng thái theo kết quả thanh toán** |
+| **BR08 – Đánh giá tài xế** | **FR14 – Đánh giá tài xế** | **BRL14 – Chỉ được đánh giá sau khi chuyến hoàn thành** | **UC08 – Đánh giá tài xế** | **AC14 – Khách hàng chỉ có thể đánh giá chuyến đã hoàn thành** |
+| **BR09 – Quản lý khách hàng** | **FR15 – Quản lý thông tin khách hàng** | **BRL15 – Chỉ người có quyền mới được quản lý** | **UC09 – Quản lý khách hàng** | **AC15 – Nhân viên vận hành có thể xem và cập nhật thông tin khách hàng** |
+| **BR10 – Quản lý tài xế** | **FR16 – Quản lý thông tin tài xế** | **BRL15 – Chỉ người có quyền mới được quản lý** | **UC10 – Quản lý tài xế** | **AC16 – Nhân viên vận hành có thể xem và cập nhật thông tin tài xế** |
+| **BR11 – Quản lý phương tiện** | **FR17 – Quản lý phương tiện** | **BRL15 – Chỉ người có quyền mới được quản lý** | **UC11 – Quản lý phương tiện** | **AC17 – Nhân viên vận hành có thể thêm, sửa và xem thông tin phương tiện** |
+| **BR12 – Thông báo** | **FR18 – Gửi thông báo chuyến đi** | **BRL16 – Thông báo phải được gửi khi phát sinh sự kiện** | **UC12 – Gửi thông báo** | **AC18 – Người dùng nhận được thông báo khi có sự kiện liên quan đến chuyến** |
+
+---
+
+# 14.4. Mối liên hệ giữa các thành phần
+
+Quá trình truy xuất yêu cầu được thể hiện như sau:
+
+```text
+Business Requirement
+        BR
+        ↓
+Functional Requirement
+        FR
+        ↓
+Business Rule
+        BRL
+        ↓
+Use Case
+        UC
+        ↓
+Acceptance Criteria
+        AC
