@@ -2,12 +2,12 @@ openapi: 3.0.0
 info:
   title: CAB System - Trip API
   version: 1.0.0
-  description: "API xử lý đặt chuyến, phân công và trạng thái (FR01-FR08, FR16-FR21)" #[cite: 2]
+  description: "API xử lý đặt chuyến, phân công và trạng thái (FR01-FR08, FR16-FR21)"
 paths:
   /api/trips:
     post:
-      summary: "Tạo chuyến xe mới (UC04)" #[cite: 2]
-      description: "Khách hàng yêu cầu đặt chuyến (AC01.2, AC01.3)" #[cite: 2]
+      summary: "Tạo chuyến xe mới (UC04)"
+      description: "Khách hàng yêu cầu đặt chuyến (AC01.2, AC01.3)"
       requestBody:
         required: true
         content:
@@ -23,10 +23,24 @@ paths:
                   type: integer
       responses:
         '201':
-          description: "Tạo thành công, trạng thái là Searching (AC01.6)" #[cite: 2]
+          description: "Tạo thành công, trạng thái là Searching (AC01.6)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tripId:
+                    type: integer
+                    example: 5001
+                  status:
+                    type: string
+                    example: "Searching"
+                  message:
+                    type: string
+                    example: "Yêu cầu đặt chuyến đã được tiếp nhận"
   /api/trips/{tripId}/driver-response:
     post:
-      summary: "Tài xế Accept/Reject chuyến (UC13, UC14)" #[cite: 2]
+      summary: "Tài xế Accept/Reject chuyến (UC13, UC14)"
       parameters:
         - name: tripId
           in: path
@@ -47,10 +61,24 @@ paths:
                   type: string
       responses:
         '200':
-          description: "Ghi nhận phản hồi thành công (AC03.4)" #[cite: 2]
+          description: "Ghi nhận phản hồi thành công (AC03.4)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tripId:
+                    type: integer
+                    example: 5001
+                  status:
+                    type: string
+                    example: "DriverAccepted"
+                  driverId:
+                    type: integer
+                    example: 88
   /api/trips/{tripId}/status:
     patch:
-      summary: "Cập nhật trạng thái chuyến (UC15)" #[cite: 2]
+      summary: "Cập nhật trạng thái chuyến (UC15)"
       parameters:
         - name: tripId
           in: path
@@ -68,4 +96,12 @@ paths:
                   type: integer
       responses:
         '200':
-          description: "Cập nhật trạng thái thành công" #[cite: 2]
+          description: "Cập nhật trạng thái thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cập nhật trạng thái thành công"
