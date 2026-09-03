@@ -2,17 +2,18 @@ openapi: 3.0.0
 info:
   title: CAB System - Driver API
   version: 1.0.0
-  description: API quản lý trạng thái và phương tiện của tài xế (UC11, UC17)[cite: 4].
+  description: "API quản lý trạng thái và phương tiện của tài xế (UC11, UC17)" #[cite: 2]
 paths:
   /api/drivers/{driverId}/status:
     patch:
-      summary: Cập nhật trạng thái sẵn sàng (UC11)[cite: 4].
-      description: Tài xế bật/tắt trạng thái sẵn sàng nhận chuyến (FR02, BRL04)[cite: 4].
+      summary: "Cập nhật trạng thái sẵn sàng (UC11)" #[cite: 2]
+      description: "Tài xế bật/tắt trạng thái sẵn sàng nhận chuyến (FR02, BRL04)" #[cite: 2]
       parameters:
         - name: driverId
           in: path
           required: true
-          schema: { type: integer }
+          schema: 
+            type: integer
       requestBody:
         required: true
         content:
@@ -20,7 +21,21 @@ paths:
             schema:
               type: object
               properties:
-                availabilityStatus: { type: string, enum: [READY, BUSY, OFFLINE] }
+                availabilityStatus: 
+                  type: string
+                  enum: [READY, BUSY, OFFLINE]
       responses:
         '200':
-          description: Cập nhật thành công[cite: 4].
+          description: "Cập nhật thành công" #[cite: 2]
+  /api/drivers/{driverId}/vehicles:
+    get:
+      summary: "Lấy danh sách phương tiện (UC17)" #[cite: 2]
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "Thành công" #[cite: 2]
