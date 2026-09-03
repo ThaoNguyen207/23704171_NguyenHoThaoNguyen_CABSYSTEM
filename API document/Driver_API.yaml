@@ -2,12 +2,12 @@ openapi: 3.0.0
 info:
   title: CAB System - Driver API
   version: 1.0.0
-  description: "API quản lý trạng thái và phương tiện của tài xế (UC11, UC17)" #[cite: 2]
+  description: "API quản lý trạng thái và phương tiện của tài xế (UC11, UC17)"
 paths:
   /api/drivers/{driverId}/status:
     patch:
-      summary: "Cập nhật trạng thái sẵn sàng (UC11)" #[cite: 2]
-      description: "Tài xế bật/tắt trạng thái sẵn sàng nhận chuyến (FR02, BRL04)" #[cite: 2]
+      summary: "Cập nhật trạng thái sẵn sàng (UC11)"
+      description: "Tài xế bật/tắt trạng thái sẵn sàng nhận chuyến (FR02, BRL04)"
       parameters:
         - name: driverId
           in: path
@@ -26,10 +26,18 @@ paths:
                   enum: [READY, BUSY, OFFLINE]
       responses:
         '200':
-          description: "Cập nhật thành công" #[cite: 2]
+          description: "Cập nhật thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cập nhật trạng thái thành công"
   /api/drivers/{driverId}/vehicles:
     get:
-      summary: "Lấy danh sách phương tiện (UC17)" #[cite: 2]
+      summary: "Lấy danh sách phương tiện (UC17)"
       parameters:
         - name: driverId
           in: path
@@ -38,4 +46,20 @@ paths:
             type: integer
       responses:
         '200':
-          description: "Thành công" #[cite: 2]
+          description: "Thành công"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    vehicleId:
+                      type: integer
+                      example: 101
+                    licensePlate:
+                      type: string
+                      example: "59A-12345"
+                    vehicleTypeId:
+                      type: integer
+                      example: 2
