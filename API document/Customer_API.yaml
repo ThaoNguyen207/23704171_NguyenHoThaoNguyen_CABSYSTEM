@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   title: CAB System - Customer API
   version: 1.0.0
-  description: "API quản lý khách hàng bao gồm đăng ký và đăng nhập (UC01, UC02)" #[cite: 4]
+  description: "API quản lý khách hàng bao gồm đăng ký và đăng nhập (UC01, UC02)"
 paths:
   /api/customers/register:
     post:
-      summary: "Đăng ký tài khoản khách hàng (UC01)" #[cite: 4]
+      summary: "Đăng ký tài khoản khách hàng (UC01)"
       requestBody:
         required: true
         content:
@@ -24,10 +24,21 @@ paths:
                   type: string
       responses:
         '201':
-          description: "Đăng ký thành công (BRL01)" #[cite: 4]
+          description: "Đăng ký thành công (BRL01)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customerId: 
+                    type: integer
+                    example: 1
+                  message: 
+                    type: string
+                    example: "Đăng ký thành công"
   /api/customers/login:
     post:
-      summary: "Đăng nhập (UC02)" #[cite: 4]
+      summary: "Đăng nhập (UC02)"
       requestBody:
         required: true
         content:
@@ -41,4 +52,15 @@ paths:
                   type: string
       responses:
         '200':
-          description: "Đăng nhập thành công, trả về Token (NFR05)" #[cite: 4]
+          description: "Đăng nhập thành công, trả về Token (NFR05)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: 
+                    type: string
+                    example: "jwt_token_string_12345"
+                  expiresIn: 
+                    type: integer
+                    example: 3600
