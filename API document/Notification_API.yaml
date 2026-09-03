@@ -2,14 +2,14 @@ openapi: 3.0.0
 info:
   title: CAB System - Notification API
   version: 1.0.0
-  description: API quản lý thông báo cho Khách hàng và Tài xế (FR37-FR42)[cite: 4].
+  description: "API quản lý thông báo cho Khách hàng và Tài xế (FR37-FR42)" #[cite: 2]
 paths:
   /api/notifications:
     get:
-      summary: Lấy danh sách thông báo (UC24)[cite: 4].
+      summary: "Lấy danh sách thông báo (UC24)" #[cite: 2]
       responses:
         '200':
-          description: Trả về lịch sử thông báo[cite: 4].
+          description: "Trả về lịch sử thông báo" #[cite: 2]
           content:
             application/json:
               schema:
@@ -17,6 +17,10 @@ paths:
                 items:
                   type: object
                   properties:
-                    notificationId: { type: integer }
-                    message: { type: string }
-                    sentTime: { type: string, format: date-time }
+                    notificationId: 
+                      type: integer
+                    message: 
+                      type: string
+                    sentTime: 
+                      type: string
+                      format: date-time
