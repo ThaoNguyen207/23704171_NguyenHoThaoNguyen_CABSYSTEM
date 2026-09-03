@@ -2,18 +2,62 @@ openapi: 3.0.0
 info:
   title: CAB System - Operations API
   version: 1.0.0
-  description: "API dành cho CMS của Admin (FR30-FR36)" #[cite: 2]
+  description: "API dành cho CMS của Admin (FR30-FR36)"
 paths:
   /api/admin/trips:
     get:
-      summary: "Tra cứu và theo dõi các chuyến đi (UC28)" #[cite: 2]
-      description: "Trả về dữ liệu giám sát cho Nhân viên vận hành (AC08.5)" #[cite: 2]
+      summary: "Tra cứu và theo dõi các chuyến đi (UC28)"
+      description: "Trả về dữ liệu giám sát cho Nhân viên vận hành (AC08.5)"
       responses:
         '200':
-          description: "Danh sách chuyến xe theo thời gian thực" #[cite: 2]
+          description: "Danh sách chuyến xe theo thời gian thực"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 150
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tripId:
+                          type: integer
+                          example: 5001
+                        customerId:
+                          type: integer
+                          example: 1
+                        driverId:
+                          type: integer
+                          example: 88
+                        status:
+                          type: string
+                          example: "InProgress"
   /api/admin/transactions:
     get:
-      summary: "Tra cứu giao dịch thanh toán (UC30)" #[cite: 2]
+      summary: "Tra cứu giao dịch thanh toán (UC30)"
       responses:
         '200':
-          description: "Lịch sử đối soát thanh toán" #[cite: 2]
+          description: "Lịch sử đối soát thanh toán"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    transactionId:
+                      type: integer
+                      example: 901
+                    tripId:
+                      type: integer
+                      example: 5001
+                    amount:
+                      type: number
+                      example: 45000.0
+                    status:
+                      type: string
+                      example: "Success"
