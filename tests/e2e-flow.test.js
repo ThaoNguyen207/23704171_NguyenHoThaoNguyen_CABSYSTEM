@@ -1,6 +1,13 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 
+process.env.CUSTOMER_SERVICE_URL = 'http://localhost:3201';
+process.env.DRIVER_SERVICE_URL = 'http://localhost:3202';
+process.env.TRIP_SERVICE_URL = 'http://localhost:3203';
+process.env.PAYMENT_SERVICE_URL = 'http://localhost:3204';
+process.env.NOTIFICATION_SERVICE_URL = 'http://localhost:3205';
+process.env.OPERATIONS_SERVICE_URL = 'http://localhost:3206';
+
 const { startServer: startCustomer } = require('../services/customer-service/src/index');
 const { startServer: startDriver } = require('../services/driver-service/src/index');
 const { startServer: startTrip } = require('../services/trip-service/src/index');
@@ -9,28 +16,32 @@ const { startServer: startNotification } = require('../services/notification-ser
 const { startServer: startOperations } = require('../services/operations-service/src/index');
 const { startGateway } = require('../services/api-gateway/src/server');
 
-describe('Full End-to-End Microservices Integration Workflow', () => {
+describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
   let instances = [];
-  const gatewayUrl = 'http://localhost:3000';
+  const gatewayUrl = 'http://localhost:3200';
 
   before(async () => {
-    // Start all 6 services on standard ports
-    instances.push(startCustomer(true, 3001));
-    instances.push(startDriver(true, 3002));
-    instances.push(startTrip(true, 3003));
-    instances.push(startPayment(true, 3004));
-    instances.push(startNotification(true, 3005));
-    instances.push(startOperations(true, 3006));
-    instances.push(startGateway(3000));
+    instances.push(startCustomer(true, 3201));
+    instances.push(startDriver(true, 3202));
+    instances.push(startTrip(true, 3203));
+    instances.push(startPayment(true, 3204));
+    instances.push(startNotification(true, 3205));
+    instances.push(startOperations(true, 3206));
+    instances.push(startGateway(3200));
 
-    // Wait 200ms for bindings
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 250));
   });
 
-  after(() => {
-    for (const inst of instances) {
-      if (inst && inst.server) inst.server.close();
-    }
+  after(async () => {
+    await Promise.all(
+      instances.map(inst => new Promise(res => {
+        if (inst && inst.server && inst.server.listening) {
+          inst.server.close(() => res());
+        } else {
+          res();
+        }
+      }))
+    );
   });
 
   let customerToken;
@@ -57,7 +68,7 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
       body: JSON.stringify({
         fullName: 'Nguyễn Hồ Thảo Nguyên',
         phone: '0987654321',
-        email: 'thaonguyen@cab.com',
+        email: 'thaonguyen@xanhsm.vn',
         password: 'Password@2026'
       })
     });
@@ -90,7 +101,7 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
     assert.strictEqual(data.availabilityStatus, 'READY');
   });
 
-  it('Step 4: Customer books trip via API Gateway (Searching status)', async () => {
+  it('Step 4: Customer books trip via API Gateway (Searching status & AI Dispatch)', async () => {
     const res = await fetch(`${gatewayUrl}/api/trips`, {
       method: 'POST',
       headers: {
@@ -99,10 +110,12 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
       },
       body: JSON.stringify({
         customerId,
-        pickupLocation: 'Ký túc xá Khu B, ĐHQG',
+        pickupLocation: 'Tòa nhà Bitexco, Q.1',
         destination: 'Sân bay Tân Sơn Nhất',
         vehicleTypeId: 2,
-        distanceKm: 20.0
+        distanceKm: 8.2,
+        pickupLat: 10.7716,
+        pickupLng: 106.7044
       })
     });
 
@@ -111,6 +124,7 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
     assert.ok(data.tripId);
     assert.strictEqual(data.status, 'Searching');
     assert.ok(data.estimatedFare > 0);
+    assert.ok(data.candidateDriver, 'Should match nearest available VinFast driver');
     tripId = data.tripId;
   });
 
@@ -168,8 +182,8 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        paymentMethodId: 2, // Electronic Payment
-        amount: 223000
+        paymentMethodId: 2,
+        amount: 97500
       })
     });
 
@@ -187,7 +201,7 @@ describe('Full End-to-End Microservices Integration Workflow', () => {
         customerId,
         driverId: 88,
         score: 5,
-        comment: 'Chuyến đi tuyệt vời! Bác tài nhiệt tình và xe rất sạch đẹp.'
+        comment: 'Xe VinFast VF 5 Plus chạy rất êm, tài xế lịch sự chu đáo!'
       })
     });
 

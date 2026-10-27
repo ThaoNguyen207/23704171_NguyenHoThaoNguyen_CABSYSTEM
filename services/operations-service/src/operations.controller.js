@@ -1,5 +1,10 @@
 const { verifyPassword, signJwt } = require('../../../shared/jwt');
 
+const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://localhost:3003';
+const getPaymentServiceUrl = () => process.env.PAYMENT_SERVICE_URL || 'http://localhost:3004';
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
+const getCustomerServiceUrl = () => process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3001';
+
 class OperationsController {
   constructor(db) {
     this.db = db;
@@ -49,7 +54,7 @@ class OperationsController {
 
   getTrips = async (req, res) => {
     try {
-      const resp = await fetch('http://localhost:3003/api/trips');
+      const resp = await fetch(`${getTripServiceUrl()}/api/trips`);
       if (resp.ok) {
         const trips = await resp.json();
         const formatted = trips.map(t => ({
@@ -86,7 +91,7 @@ class OperationsController {
 
   getTransactions = async (req, res) => {
     try {
-      const resp = await fetch('http://localhost:3004/api/payments');
+      const resp = await fetch(`${getPaymentServiceUrl()}/api/payments`);
       if (resp.ok) {
         const transactions = await resp.json();
         return res.status(200).json(transactions);
@@ -112,10 +117,10 @@ class OperationsController {
 
     try {
       const [tRes, dRes, cRes, pRes] = await Promise.all([
-        fetch('http://localhost:3003/api/trips').then(r => r.json()).catch(() => []),
-        fetch('http://localhost:3002/api/drivers').then(r => r.json()).catch(() => []),
-        fetch('http://localhost:3001/api/customers').then(r => r.json()).catch(() => []),
-        fetch('http://localhost:3004/api/payments').then(r => r.json()).catch(() => [])
+        fetch(`${getTripServiceUrl()}/api/trips`).then(r => r.json()).catch(() => []),
+        fetch(`${getDriverServiceUrl()}/api/drivers`).then(r => r.json()).catch(() => []),
+        fetch(`${getCustomerServiceUrl()}/api/customers`).then(r => r.json()).catch(() => []),
+        fetch(`${getPaymentServiceUrl()}/api/payments`).then(r => r.json()).catch(() => [])
       ]);
 
       tripCount = Array.isArray(tRes) ? tRes.length : (tRes.total || 0);

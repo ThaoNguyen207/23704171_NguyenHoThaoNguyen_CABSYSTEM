@@ -1,13 +1,15 @@
 const { calculateFare } = require('./fare.calculator');
 const { sharedBus } = require('../../../shared/event-bus');
 
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
+
 class TripController {
   constructor(db) {
     this.db = db;
   }
 
   createTrip = async (req, res) => {
-    const { customerId, pickupLocation, destination, vehicleTypeId, distanceKm } = req.body;
+    const { customerId, pickupLocation, destination, vehicleTypeId, distanceKm, pickupLat, pickupLng, autoDispatch } = req.body;
 
     // Validation (BRL02, EX01, EX02)
     if (!pickupLocation || !destination || !vehicleTypeId) {
@@ -39,23 +41,37 @@ class TripController {
       [tripId, vTypeId, fareCalc.baseFare, fareCalc.distanceKm, fareCalc.totalFare]
     );
 
-    // Try to find available driver via Driver Service REST API or local bus
+    // Smart GPS Nearest Driver Matching (Xanh SM AI Dispatch)
     let candidateDriver = null;
+    let allNearby = [];
     try {
-      const response = await fetch(`http://localhost:3002/api/drivers/available?vehicleTypeId=${vTypeId}`);
-      if (response.ok) {
-        const drivers = await response.json();
-        if (drivers && drivers.length > 0) {
-          candidateDriver = drivers[0]; // Highest rated available driver
+      const pLat = pickupLat || 10.7716;
+      const pLng = pickupLng || 106.7044;
+      const resp = await fetch(`${getDriverServiceUrl()}/api/drivers/nearby?lat=${pLat}&lng=${pLng}&vehicleTypeId=${vTypeId}`);
+      if (resp.ok) {
+        allNearby = await resp.json();
+        if (allNearby && allNearby.length > 0) {
+          candidateDriver = allNearby[0]; // Nearest driver
         }
       }
     } catch {
-      // Driver service might be local or in test mode; fallback to mock driver 88
-      candidateDriver = { driverId: 88, fullName: 'Lê Văn Tài', rating: 4.9 };
+      // Fallback if driver service offline
+      candidateDriver = {
+        driverId: 88,
+        fullName: 'Lê Văn Tài',
+        phone: '0988888888',
+        rating: 4.9,
+        model: 'VinFast VF 5 Plus',
+        licensePlate: '59A-12345',
+        distanceKm: 1.2,
+        etaMinutes: 3,
+        etaText: '3 phút (1.2 km)',
+        batteryLevel: 92
+      };
     }
 
     if (candidateDriver) {
-      // Create pending driver assignment
+      // Create pending driver assignment (SRS E07)
       this.db.run(
         `INSERT INTO driver_assignments (tripId, driverId, assignmentStatus)
          VALUES (?, ?, 'Pending')`,
@@ -71,16 +87,51 @@ class TripController {
       pickupLocation,
       destination,
       fareAmount: fareCalc.totalFare,
-      candidateDriver
+      co2SavedKg: fareCalc.co2SavedKg,
+      candidateDriver,
+      allNearbyCount: allNearby.length
     });
+
+    // Auto-Accept Feature (Xanh SM Auto-Dispatch):
+    // If autoDispatch flag is enabled or true, simulate driver accepting within 1 second
+    if (autoDispatch && candidateDriver) {
+      setTimeout(() => {
+        try {
+          this.executeDriverAccept(tripId, candidateDriver.driverId, cid);
+        } catch (e) {
+          console.error('Auto accept error:', e);
+        }
+      }, 1000);
+    }
 
     return res.status(201).json({
       tripId,
       status: 'Searching',
-      message: 'Yêu cầu đặt chuyến đã được tiếp nhận',
+      message: candidateDriver
+        ? `Đã tìm thấy tài xế Xanh SM gần nhất (${candidateDriver.fullName} - ${candidateDriver.model})`
+        : 'Yêu cầu đặt chuyến đã được tiếp nhận, đang tìm tài xế...',
       estimatedFare: fareCalc.totalFare,
-      candidateDriver
+      co2SavedKg: fareCalc.co2SavedKg,
+      candidateDriver,
+      nearbyDriversCount: allNearby.length
     });
+  };
+
+  executeDriverAccept = (tripId, driverId, customerId) => {
+    this.db.run(
+      `UPDATE trips SET driverId = ?, tripStatusId = 2 WHERE tripId = ?`,
+      [driverId, tripId]
+    );
+
+    this.db.run(
+      `UPDATE driver_assignments
+       SET assignmentStatus = 'Accepted', responseTime = CURRENT_TIMESTAMP
+       WHERE tripId = ? AND driverId = ?`,
+      [tripId, driverId]
+    );
+
+    sharedBus.publish('DRIVER_ACCEPTED', { tripId, driverId, customerId });
+    sharedBus.publish('DRIVER_ASSIGNED', { tripId, driverId });
   };
 
   driverResponse = async (req, res) => {
@@ -102,46 +153,33 @@ class TripController {
     const did = driverId ? Number(driverId) : (trip.driverId || 88);
 
     if (action === 'ACCEPT') {
-      // Update trip
-      this.db.run(
-        `UPDATE trips SET driverId = ?, tripStatusId = 2 WHERE tripId = ?`,
-        [did, tripId]
-      );
-
-      // Update assignment
-      this.db.run(
-        `UPDATE driver_assignments
-         SET assignmentStatus = 'Accepted', responseTime = CURRENT_TIMESTAMP
-         WHERE tripId = ? AND driverId = ?`,
-        [tripId, did]
-      );
-
-      // Publish events
-      sharedBus.publish('DRIVER_ACCEPTED', { tripId, driverId: did, customerId: trip.customerId });
-      sharedBus.publish('DRIVER_ASSIGNED', { tripId, driverId: did });
+      this.executeDriverAccept(tripId, did, trip.customerId);
 
       return res.status(200).json({
         tripId,
         status: 'DriverAccepted',
         driverId: did,
-        message: 'Tài xế đã nhận chuyến thành công'
+        message: 'Tài xế đã nhận chuyến thành công (AC03.4)'
       });
     } else {
-      // REJECT
+      // REJECT -> Auto-cascade to next nearest available driver (EX06, EX07)
       this.db.run(
         `UPDATE driver_assignments
          SET assignmentStatus = 'Rejected', rejectReason = ?, responseTime = CURRENT_TIMESTAMP
          WHERE tripId = ? AND driverId = ?`,
-        [rejectReason || 'Bận', tripId, did]
+        [rejectReason || 'Tài xế đang bận', tripId, did]
       );
 
-      // Try to find next available driver
+      // Query already assigned drivers to avoid repeating
+      const assigned = this.db.query('SELECT driverId FROM driver_assignments WHERE tripId = ?', [tripId]);
+      const assignedIds = assigned.map(a => a.driverId);
+
       let nextDriver = null;
       try {
-        const response = await fetch(`http://localhost:3002/api/drivers/available?vehicleTypeId=${trip.vehicleTypeId}`);
-        if (response.ok) {
-          const drivers = await response.json();
-          nextDriver = drivers.find(d => d.driverId !== did);
+        const resp = await fetch(`${getDriverServiceUrl()}/api/drivers/available?vehicleTypeId=${trip.vehicleTypeId}`);
+        if (resp.ok) {
+          const drivers = await resp.json();
+          nextDriver = drivers.find(d => !assignedIds.includes(d.driverId));
         }
       } catch {}
 
@@ -153,8 +191,8 @@ class TripController {
         return res.status(200).json({
           tripId,
           status: 'Searching',
-          message: 'Đang chuyển chuyến sang tài xế tiếp theo',
-          nextDriverId: nextDriver.driverId
+          message: `Đang chuyển chuyến sang tài xế tiếp theo: ${nextDriver.fullName}`,
+          nextDriver
         });
       } else {
         // No driver left (EX08)
@@ -164,7 +202,7 @@ class TripController {
         return res.status(200).json({
           tripId,
           status: 'NoDriver',
-          message: 'Không tìm thấy tài xế nào khả dụng'
+          message: 'Không còn tài xế nào khả dụng trong khu vực'
         });
       }
     }
@@ -200,12 +238,9 @@ class TripController {
 
     const statusName = statusMap[statusId];
 
-    // Status transition handling
     if (statusId === 5) {
-      // InProgress: Start trip
       this.db.run(`UPDATE trips SET tripStatusId = ?, startTime = CURRENT_TIMESTAMP WHERE tripId = ?`, [statusId, tripId]);
     } else if (statusId === 6) {
-      // Completed: Finish trip
       this.db.run(`UPDATE trips SET tripStatusId = ?, endTime = CURRENT_TIMESTAMP WHERE tripId = ?`, [statusId, tripId]);
       sharedBus.publish('TRIP_COMPLETED', {
         tripId,

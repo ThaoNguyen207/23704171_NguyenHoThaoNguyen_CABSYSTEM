@@ -1,6 +1,9 @@
 const crypto = require('node:crypto');
 const { sharedBus } = require('../../../shared/event-bus');
 
+const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://localhost:3003';
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
+
 class PaymentController {
   constructor(db) {
     this.db = db;
@@ -20,7 +23,7 @@ class PaymentController {
     // Check if trip is completed and fetch trip info
     let trip = null;
     try {
-      const resp = await fetch(`http://localhost:3003/api/trips/${tripId}`);
+      const resp = await fetch(`${getTripServiceUrl()}/api/trips/${tripId}`);
       if (resp.ok) {
         trip = await resp.json();
       }
@@ -105,7 +108,7 @@ class PaymentController {
 
     if (!did) {
       try {
-        const resp = await fetch(`http://localhost:3003/api/trips/${tripId}`);
+        const resp = await fetch(`${getTripServiceUrl()}/api/trips/${tripId}`);
         if (resp.ok) {
           const trip = await resp.json();
           did = trip.driverId;
@@ -128,7 +131,7 @@ class PaymentController {
 
     // Inform Driver Service to update driver's rating
     try {
-      await fetch(`http://localhost:3002/api/drivers/${did}/rating`, {
+      await fetch(`${getDriverServiceUrl()}/api/drivers/${did}/rating`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ score: numScore })

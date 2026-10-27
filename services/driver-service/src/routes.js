@@ -14,6 +14,8 @@ function setupDriverRoutes(app, db) {
   app.post('/api/drivers/register', controller.register);
   app.post('/api/drivers/login', controller.login);
   app.get('/api/drivers/available', controller.getAvailableDrivers);
+  app.get('/api/drivers/nearby', controller.getNearbyDrivers);
+  app.get('/api/drivers/fleet', controller.getFleet);
   app.get('/api/drivers/vehicle-types', controller.getVehicleTypes);
   app.get('/api/drivers/:driverId', controller.getDriver);
   app.get('/api/drivers', controller.listDrivers);

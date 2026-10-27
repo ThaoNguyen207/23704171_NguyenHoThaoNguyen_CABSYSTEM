@@ -1,6 +1,20 @@
 const { hashPassword, verifyPassword, signJwt } = require('../../../shared/jwt');
 const { sharedBus } = require('../../../shared/event-bus');
 
+// Haversine formula to compute great-circle distance between two GPS points in km
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5; // fallback default 1.5km
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Number((R * c).toFixed(2));
+}
+
 class DriverController {
   constructor(db) {
     this.db = db;
@@ -69,7 +83,7 @@ class DriverController {
 
     const result = this.db.run(
       'INSERT INTO vehicles (driverId, vehicleTypeId, licensePlate, brand, model) VALUES (?, ?, ?, ?, ?)',
-      [driverId, vehicleTypeId, licensePlate, brand || '', model || '']
+      [driverId, vehicleTypeId, licensePlate, brand || 'VinFast', model || 'VinFast VF 5 Plus']
     );
 
     return res.status(201).json({
@@ -102,13 +116,13 @@ class DriverController {
     const hashedPassword = hashPassword(password);
     const driverResult = this.db.run(
       'INSERT INTO drivers (fullName, phone, email, password, availabilityStatus) VALUES (?, ?, ?, ?, ?)',
-      [fullName, phone, email, hashedPassword, 'OFFLINE']
+      [fullName, phone, email, hashedPassword, 'READY']
     );
     const driverId = Number(driverResult.lastInsertRowid);
 
     this.db.run(
       'INSERT INTO vehicles (driverId, vehicleTypeId, licensePlate, brand, model) VALUES (?, ?, ?, ?, ?)',
-      [driverId, vehicleTypeId || 1, licensePlate, brand || '', model || '']
+      [driverId, vehicleTypeId || 2, licensePlate, brand || 'VinFast', model || 'VinFast VF 5 Plus']
     );
 
     return res.status(201).json({
@@ -157,7 +171,9 @@ class DriverController {
     const vehicleTypeId = req.query.vehicleTypeId ? Number(req.query.vehicleTypeId) : null;
 
     let sql = `
-      SELECT DISTINCT d.driverId, d.fullName, d.phone, d.rating, d.availabilityStatus, v.licensePlate, v.brand, v.model, v.vehicleTypeId
+      SELECT DISTINCT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
+             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             v.licensePlate, v.brand, v.model, v.vehicleTypeId
       FROM drivers d
       JOIN vehicles v ON d.driverId = v.driverId
       WHERE d.availabilityStatus = 'READY' AND d.status = 'ACTIVE'
@@ -175,15 +191,72 @@ class DriverController {
     return res.status(200).json(drivers);
   };
 
+  // Smart GPS Nearby Driver Dispatch (Haversine calculation)
+  getNearbyDrivers = (req, res) => {
+    const lat = req.query.lat ? parseFloat(req.query.lat) : 10.7716;
+    const lng = req.query.lng ? parseFloat(req.query.lng) : 106.7044;
+    const vehicleTypeId = req.query.vehicleTypeId ? Number(req.query.vehicleTypeId) : null;
+    const maxRadius = req.query.radius ? parseFloat(req.query.radius) : 15.0; // default 15km
+
+    let sql = `
+      SELECT DISTINCT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
+             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             v.licensePlate, v.brand, v.model, v.vehicleTypeId, vt.typeName as vehicleType
+      FROM drivers d
+      JOIN vehicles v ON d.driverId = v.driverId
+      LEFT JOIN vehicle_types vt ON v.vehicleTypeId = vt.vehicleTypeId
+      WHERE d.availabilityStatus = 'READY' AND d.status = 'ACTIVE'
+    `;
+    const params = [];
+
+    if (vehicleTypeId) {
+      sql += ' AND v.vehicleTypeId = ?';
+      params.push(vehicleTypeId);
+    }
+
+    const drivers = this.db.query(sql, params);
+
+    // Calculate real distance for each driver and sort closest first
+    const withDistance = drivers.map(d => {
+      const distanceKm = calculateDistanceKm(lat, lng, d.latitude, d.longitude);
+      const etaMinutes = Math.max(1, Math.round(distanceKm * 2.5)); // estimate ~ 2.5 mins per km in city
+      return {
+        ...d,
+        distanceKm,
+        etaMinutes,
+        etaText: `${etaMinutes} phút (${distanceKm} km)`
+      };
+    })
+    .filter(d => d.distanceKm <= maxRadius)
+    .sort((a, b) => a.distanceKm - b.distanceKm || b.rating - a.rating);
+
+    return res.status(200).json(withDistance);
+  };
+
+  // Full fleet for Radar / CMS Map
+  getFleet = (req, res) => {
+    const fleet = this.db.query(`
+      SELECT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
+             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             v.licensePlate, v.brand, v.model, v.vehicleTypeId, vt.typeName as vehicleType
+      FROM drivers d
+      LEFT JOIN vehicles v ON d.driverId = v.driverId
+      LEFT JOIN vehicle_types vt ON v.vehicleTypeId = vt.vehicleTypeId
+      WHERE d.status = 'ACTIVE'
+      ORDER BY d.driverId ASC
+    `);
+    return res.status(200).json(fleet);
+  };
+
   getVehicleTypes = (req, res) => {
-    const types = this.db.query('SELECT * FROM vehicle_types');
+    const types = this.db.query('SELECT * FROM vehicle_types ORDER BY vehicleTypeId ASC');
     return res.status(200).json(types);
   };
 
   getDriver = (req, res) => {
     const driverId = Number(req.params.driverId);
     const driver = this.db.get(
-      'SELECT driverId, fullName, phone, email, rating, totalRatings, availabilityStatus, status, createdAt FROM drivers WHERE driverId = ?',
+      'SELECT driverId, fullName, phone, email, rating, totalRatings, availabilityStatus, batteryLevel, currentLocationName, latitude, longitude, status, createdAt FROM drivers WHERE driverId = ?',
       [driverId]
     );
 
@@ -198,6 +271,7 @@ class DriverController {
   listDrivers = (req, res) => {
     const drivers = this.db.query(`
       SELECT d.driverId, d.fullName, d.phone, d.email, d.rating, d.totalRatings, d.availabilityStatus, d.status,
+             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
              v.licensePlate, v.brand, v.model, vt.typeName as vehicleType
       FROM drivers d
       LEFT JOIN vehicles v ON d.driverId = v.driverId
@@ -229,4 +303,4 @@ class DriverController {
   };
 }
 
-module.exports = { DriverController };
+module.exports = { DriverController, calculateDistanceKm };
