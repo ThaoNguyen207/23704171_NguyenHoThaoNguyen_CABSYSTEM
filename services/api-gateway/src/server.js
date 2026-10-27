@@ -63,16 +63,19 @@ function createGateway() {
     }
   });
 
-  // Static web routes
+  // Static web routes with no-cache headers to ensure immediate UI updates
   app.get('/', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(publicDir, 'index.html'));
   });
 
   app.get('/docs', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(publicDir, 'docs.html'));
   });
 
   app.get('/app.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(publicDir, 'app.js'), 'application/javascript; charset=utf-8');
   });
 

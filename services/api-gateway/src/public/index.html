@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>CAB SYSTEM – Hệ Thống Đặt Xe Công Nghệ Thông Minh</title>
   
   <!-- CSS Frameworks & Fonts -->
@@ -182,6 +185,54 @@
       color: #60A5FA;
     }
 
+    /* Live Update Flash Animation */
+    .flash-update {
+      animation: flash-highlight 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes flash-highlight {
+      0% {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.6);
+        background-color: rgba(16, 185, 129, 0.25);
+        color: #10B981;
+      }
+      100% {
+        box-shadow: none;
+      }
+    }
+
+    .btn-swap-locations {
+      background: #1F2937;
+      border: 1px solid #374151;
+      color: #9CA3AF;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-swap-locations:hover {
+      background: #374151;
+      color: #60A5FA;
+      transform: rotate(180deg);
+    }
+
+    .map-pick-btn {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid #374151;
+      background: #1E293B;
+      color: #E2E8F0;
+      transition: all 0.2s;
+    }
+    .map-pick-btn:hover, .map-pick-btn.active {
+      background: #2563EB;
+      color: #FFFFFF;
+      border-color: #3B82F6;
+    }
+
     .event-log-box {
       background: #090E17;
       border: 1px solid #1E293B;
@@ -247,47 +298,119 @@
             <span class="small text-secondary">Khách hàng: <strong>Nguyễn Hồ Thảo Nguyên (#1)</strong></span>
           </div>
           <div class="card-body">
+            <!-- Global Datalist of HCMC Locations for quick selection -->
+            <datalist id="locationDatalist">
+              <!-- Top Landmarks -->
+              <option value="Chợ Bến Thành, Quận 1"></option>
+              <option value="Tòa nhà Bitexco, Quận 1"></option>
+              <option value="Landmark 81, Bình Thạnh"></option>
+              <option value="Sân bay Tân Sơn Nhất, Tân Bình"></option>
+              <option value="Phố đi bộ Nguyễn Huệ, Quận 1"></option>
+              <option value="Nhà thờ Đức Bà, Quận 1"></option>
+              <option value="Hồ Con Rùa, Quận 3"></option>
+              <option value="Crescent Mall, Quận 7"></option>
+              <option value="SC VivoCity, Quận 7"></option>
+              <option value="KTX Khu B ĐHQG, Thủ Đức"></option>
+              <option value="Khu du lịch Suối Tiên, Thủ Đức"></option>
+              <option value="Công viên Đầm Sen, Quận 11"></option>
+              <option value="Chợ Bình Tây (Chợ Lớn), Quận 6"></option>
+              <option value="Bệnh viện Chợ Rẫy, Quận 5"></option>
+              <option value="Aeon Mall Tân Phú, Tân Phú"></option>
+              <option value="Aeon Mall Bình Tân, Bình Tân"></option>
+              <option value="Khu Thảo Điền, TP. Thủ Đức"></option>
+              <option value="Vạn Hạnh Mall, Quận 10"></option>
+              <option value="Phan Xích Long, Phú Nhuận"></option>
+              <option value="Bến xe Miền Đông, Bình Thạnh"></option>
+              <option value="Bến xe Miền Tây, Bình Tân"></option>
+              <option value="Ga Sài Gòn, Quận 3"></option>
+              <option value="Vincom Đồng Khởi, Quận 1"></option>
+              <option value="Bến Bạch Đằng, Quận 1"></option>
+              <option value="Đại học Bách Khoa, Quận 10"></option>
+              <option value="ĐH Sư Phạm Kỹ Thuật, TP. Thủ Đức"></option>
+              <option value="Bến xe An Sương, Quận 12"></option>
+              <!-- Districts -->
+              <option value="Quận 1"></option>
+              <option value="Quận 3"></option>
+              <option value="Quận 4"></option>
+              <option value="Quận 5"></option>
+              <option value="Quận 6"></option>
+              <option value="Quận 7"></option>
+              <option value="Quận 8"></option>
+              <option value="Quận 10"></option>
+              <option value="Quận 11"></option>
+              <option value="Quận 12"></option>
+              <option value="Bình Thạnh"></option>
+              <option value="Gò Vấp"></option>
+              <option value="Phú Nhuận"></option>
+              <option value="Tân Bình"></option>
+              <option value="Tân Phú"></option>
+              <option value="TP. Thủ Đức"></option>
+              <option value="Bình Tân"></option>
+              <option value="Nhà Bè"></option>
+              <option value="Bình Chánh"></option>
+              <option value="Hóc Môn"></option>
+              <option value="Củ Chi"></option>
+              <option value="Cần Giờ"></option>
+            </datalist>
+
             <!-- Address Inputs with dynamic distance calculation -->
-            <div class="row g-3">
-              <div class="col-md-6 position-relative">
-                <label class="form-label small text-secondary fw-bold">Điểm đón (Pickup):</label>
+            <div class="row g-2 align-items-center">
+              <div class="col-md-5 position-relative">
+                <label class="form-label small text-secondary fw-bold mb-1">
+                  <i class="fa-solid fa-location-dot text-success me-1"></i>Điểm đón (Pickup):
+                </label>
                 <div class="input-group">
-                  <span class="input-group-text bg-dark border-secondary text-success"><i class="fa-solid fa-location-dot"></i></span>
-                  <input type="text" id="pickupInput" class="form-control" placeholder="Nhập địa chỉ đón bất kỳ..." value="Tòa nhà Bitexco, Q.1" autocomplete="off" oninput="onAddressInput('pickup')">
+                  <input type="text" id="pickupInput" class="form-control" list="locationDatalist" placeholder="Nhập địa chỉ đón bất kỳ..." value="Tòa nhà Bitexco, Quận 1" autocomplete="off" oninput="onAddressChanged('pickup')" onchange="onAddressChanged('pickup')" onkeyup="onAddressChanged('pickup')" onpaste="onAddressChanged('pickup')">
                 </div>
                 <div class="autocomplete-list" id="pickupSuggestions"></div>
               </div>
 
-              <div class="col-md-6 position-relative">
-                <label class="form-label small text-secondary fw-bold">Điểm đến (Destination):</label>
+              <!-- Swap Button -->
+              <div class="col-md-2 text-center pt-3">
+                <button type="button" class="btn-swap-locations" onclick="swapLocations()" title="Đổi chiều lộ trình">
+                  <i class="fa-solid fa-right-left"></i>
+                </button>
+              </div>
+
+              <div class="col-md-5 position-relative">
+                <label class="form-label small text-secondary fw-bold mb-1">
+                  <i class="fa-solid fa-flag-checkered text-danger me-1"></i>Điểm đến (Destination):
+                </label>
                 <div class="input-group">
-                  <span class="input-group-text bg-dark border-secondary text-danger"><i class="fa-solid fa-flag-checkered"></i></span>
-                  <input type="text" id="destInput" class="form-control" placeholder="Nhập địa chỉ đến bất kỳ..." value="Sân bay Tân Sơn Nhất, Tân Bình" autocomplete="off" oninput="onAddressInput('dest')">
+                  <input type="text" id="destInput" class="form-control" list="locationDatalist" placeholder="Nhập địa chỉ đến bất kỳ..." value="Sân bay Tân Sơn Nhất, Tân Bình" autocomplete="off" oninput="onAddressChanged('dest')" onchange="onAddressChanged('dest')" onkeyup="onAddressChanged('dest')" onpaste="onAddressChanged('dest')">
                 </div>
                 <div class="autocomplete-list" id="destSuggestions"></div>
               </div>
             </div>
 
-            <!-- Quick presets -->
-            <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-              <span class="small text-secondary">Gợi ý nhanh:</span>
-              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Chợ Bến Thành, Quận 1', 'Landmark 81, Bình Thạnh')">Bến Thành → Landmark 81</button>
-              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Tòa nhà Bitexco, Quận 1', 'Sân bay Tân Sơn Nhất, Tân Bình')">Bitexco → Sân bay TSN</button>
-              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('KTX Khu B ĐHQG, Thủ Đức', 'Phố đi bộ Nguyễn Huệ, Quận 1')">KTX ĐHQG → Nguyễn Huệ</button>
-              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Crescent Mall, Quận 7', 'Vincom Đồng Khởi, Quận 1')">Crescent Mall → Vincom Q.1</button>
+            <!-- Quick presets & action bar -->
+            <div class="mt-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div class="d-flex flex-wrap gap-1 align-items-center">
+                <span class="small text-secondary me-1">Gợi ý nhanh:</span>
+                <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Chợ Bến Thành, Quận 1', 'Landmark 81, Bình Thạnh')">Bến Thành → Landmark 81</button>
+                <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Tòa nhà Bitexco, Quận 1', 'Sân bay Tân Sơn Nhất, Tân Bình')">Bitexco → Sân bay TSN</button>
+                <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('KTX Khu B ĐHQG, Thủ Đức', 'Phố đi bộ Nguyễn Huệ, Quận 1')">KTX ĐHQG → Nguyễn Huệ</button>
+                <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Crescent Mall, Quận 7', 'Vincom Đồng Khởi, Quận 1')">Crescent Mall → Vincom Q.1</button>
+                <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Công viên Đầm Sen, Quận 11', 'Khu du lịch Suối Tiên, Thủ Đức')">Đầm Sen → Suối Tiên</button>
+              </div>
+              <div>
+                <button class="btn btn-sm btn-outline-primary py-0" onclick="recalculateFares()">
+                  <i class="fa-solid fa-calculator me-1"></i>Tính lại cước
+                </button>
+              </div>
             </div>
 
             <!-- Calculated Distance & Duration Indicator -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 p-2 bg-dark bg-opacity-60 rounded border border-secondary border-opacity-50">
-              <div class="distance-indicator">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 p-2 bg-dark bg-opacity-60 rounded border border-secondary border-opacity-50" id="metricsContainer">
+              <div class="distance-indicator" id="metricDistanceBox">
                 <i class="fa-solid fa-road text-info"></i>
-                <span>Khoảng cách lộ trình: <strong class="text-warning" id="displayDistance">9.2 km</strong></span>
+                <span>Khoảng cách lộ trình: <strong class="text-warning fs-6" id="displayDistance">9.2 km</strong></span>
               </div>
-              <div class="distance-indicator">
+              <div class="distance-indicator" id="metricDurationBox">
                 <i class="fa-regular fa-clock text-info"></i>
                 <span>Thời gian ước tính: <strong class="text-light" id="displayDuration">24 phút</strong></span>
               </div>
-              <div class="distance-indicator">
+              <div class="distance-indicator" id="metricCo2Box">
                 <i class="fa-solid fa-leaf text-success"></i>
                 <span>Cắt giảm CO2: <strong class="text-success" id="displayCo2">1.29 kg</strong></span>
               </div>
@@ -453,13 +576,27 @@
             <span class="badge bg-secondary" id="driverOnlineCount">20 tài xế online</span>
           </div>
           <div class="card-body p-2">
+            <!-- Map Action Toolbar -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 px-1 gap-1">
+              <div class="d-flex gap-1">
+                <button type="button" class="map-pick-btn" id="btnPickPickup" onclick="setMapPickMode('pickup')">
+                  <i class="fa-solid fa-location-dot text-success me-1"></i>Đặt điểm đón
+                </button>
+                <button type="button" class="map-pick-btn" id="btnPickDest" onclick="setMapPickMode('dest')">
+                  <i class="fa-solid fa-flag-checkered text-danger me-1"></i>Đặt điểm đến
+                </button>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="centerMapHCMC()"><i class="fa-solid fa-crosshairs me-1"></i>TP.HCM</button>
+            </div>
             <!-- Map Container -->
             <div id="cabMap"></div>
             <div class="d-flex justify-content-between align-items-center mt-2 px-1 small text-secondary">
-              <span><i class="fa-solid fa-circle text-success me-1"></i>Điểm đón</span>
-              <span><i class="fa-solid fa-circle text-danger me-1"></i>Điểm đến</span>
+              <span><i class="fa-solid fa-circle text-success me-1"></i>Điểm đón (Kéo thả)</span>
+              <span><i class="fa-solid fa-circle text-danger me-1"></i>Điểm đến (Kéo thả)</span>
               <span><i class="fa-solid fa-car text-warning me-1"></i>Tài xế sẵn sàng</span>
-              <button class="btn btn-sm btn-outline-secondary py-0" onclick="centerMapHCMC()">Reset vị trí</button>
+            </div>
+            <div class="small text-info text-center mt-1" style="font-size: 11px;">
+              <i class="fa-solid fa-circle-info me-1"></i>Kéo thả ghim hoặc click trên bản đồ để đổi vị trí & tự động tính lại cước ngay
             </div>
           </div>
         </div>
@@ -507,6 +644,6 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/app.js"></script>
+  <script src="/app.js?v=3.2"></script>
 </body>
 </html>

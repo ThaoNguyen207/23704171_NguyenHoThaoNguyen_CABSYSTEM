@@ -1,6 +1,6 @@
 const { calculateFare } = require('./fare.calculator');
 const { sharedBus } = require('../../../shared/event-bus');
-const { getDistanceBetweenAddresses, geocodeAddress } = require('../../../shared/geo-helper');
+const { getDistanceBetweenAddresses, geocodeAddress, reverseGeocode, calculateDrivingDistanceKm } = require('../../../shared/geo-helper');
 
 const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
 
@@ -11,16 +11,38 @@ class TripController {
 
   // Dynamic route distance & fare estimation endpoint
   estimateRoute = (req, res) => {
-    const { pickupLocation, destination, vehicleTypeId } = req.body;
+    const { pickupLocation, destination, vehicleTypeId, pickupLat, pickupLng, destLat, destLng } = req.body;
 
-    if (!pickupLocation || !destination) {
+    if (!pickupLocation && (!pickupLat || !pickupLng)) {
       return res.status(400).json({
         error: 'VALIDATION_ERROR',
-        message: 'Vui lòng cung cấp cả điểm đón (pickupLocation) và điểm đến (destination)'
+        message: 'Vui lòng cung cấp điểm đón (pickupLocation hoặc pickupLat, pickupLng)'
       });
     }
 
-    const routeInfo = getDistanceBetweenAddresses(pickupLocation, destination);
+    if (!destination && (!destLat || !destLng)) {
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Vui lòng cung cấp điểm đến (destination hoặc destLat, destLng)'
+      });
+    }
+
+    let routeInfo;
+    if (pickupLat && pickupLng && destLat && destLng) {
+      const pLat = Number(pickupLat);
+      const pLng = Number(pickupLng);
+      const dLat = Number(destLat);
+      const dLng = Number(destLng);
+      const dist = calculateDrivingDistanceKm({ lat: pLat, lng: pLng }, { lat: dLat, lng: dLng });
+      routeInfo = {
+        pickup: { lat: pLat, lng: pLng, name: pickupLocation || reverseGeocode(pLat, pLng) },
+        destination: { lat: dLat, lng: dLng, name: destination || reverseGeocode(dLat, dLng) },
+        distanceKm: dist
+      };
+    } else {
+      routeInfo = getDistanceBetweenAddresses(pickupLocation || 'Quận 1', destination || 'Sân bay Tân Sơn Nhất');
+    }
+
     const distanceKm = routeInfo.distanceKm;
 
     const bikeFare = calculateFare(1, distanceKm);

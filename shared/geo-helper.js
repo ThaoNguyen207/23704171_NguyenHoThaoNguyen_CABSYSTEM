@@ -25,18 +25,30 @@ const KNOWN_LOCATIONS = [
   { keywords: ['bến xe miền tây'], name: 'Bến xe Miền Tây, Bình Tân', lat: 10.7518, lng: 106.6188 },
   { keywords: ['ga sài gòn', 'ga sai gon'], name: 'Ga Sài Gòn, Quận 3', lat: 10.7816, lng: 106.6784 },
   { keywords: ['vincom đồng khởi'], name: 'Vincom Center Đồng Khởi, Quận 1', lat: 10.7780, lng: 106.7020 },
-  { keywords: ['bến bạch đằng', 'bạch đằng'], name: 'Bến Bạch Đằng, Quận 1', lat: 10.7719, lng: 106.7068 }
+  { keywords: ['bến bạch đằng', 'bạch đằng'], name: 'Bến Bạch Đằng, Quận 1', lat: 10.7719, lng: 106.7068 },
+  { keywords: ['dinh độc lập', 'dinh thong nhat'], name: 'Dinh Độc Lập, Quận 1', lat: 10.7770, lng: 106.6953 },
+  { keywords: ['thảo cầm viên', 'sở thú'], name: 'Thảo Cầm Viên Sài Gòn, Quận 1', lat: 10.7875, lng: 106.7053 },
+  { keywords: ['vivo', 'sc vivocity'], name: 'SC VivoCity, Quận 7', lat: 10.7308, lng: 106.7058 },
+  { keywords: ['bách khoa', 'đh bách khoa', 'hcmut'], name: 'Đại học Bách Khoa, Quận 10', lat: 10.7725, lng: 106.6578 },
+  { keywords: ['kinh tế', 'ueh'], name: 'Đại học Kinh Tế TP.HCM, Quận 3', lat: 10.7831, lng: 106.6958 },
+  { keywords: ['sư phạm kỹ thuật', 'spkt', 'ute'], name: 'ĐH Sư Phạm Kỹ Thuật, TP. Thủ Đức', lat: 10.8509, lng: 106.7720 },
+  { keywords: ['hutech', 'điện biên phủ'], name: 'Đại học HUTECH, Bình Thạnh', lat: 10.8016, lng: 106.7144 },
+  { keywords: ['an sương', 'bến xe an sương'], name: 'Bến xe An Sương, Quận 12', lat: 10.8496, lng: 106.6174 },
+  { keywords: ['ngã tư ga'], name: 'Bến xe Ngã Tư Ga, Quận 12', lat: 10.8665, lng: 106.6835 },
+  { keywords: ['sala', 'khu đô thị sala'], name: 'Khu đô thị Sala, TP. Thủ Đức', lat: 10.7682, lng: 106.7214 }
 ];
 
 // District centroids
 const DISTRICTS = [
   { keywords: ['quận 1', 'q.1', 'q1', 'district 1'], name: 'Quận 1', lat: 10.7769, lng: 106.7009 },
+  { keywords: ['quận 2', 'q.2', 'q2', 'district 2'], name: 'Quận 2 (TP. Thủ Đức)', lat: 10.7872, lng: 106.7498 },
   { keywords: ['quận 3', 'q.3', 'q3', 'district 3'], name: 'Quận 3', lat: 10.7844, lng: 106.6844 },
   { keywords: ['quận 4', 'q.4', 'q4', 'district 4'], name: 'Quận 4', lat: 10.7578, lng: 106.7013 },
   { keywords: ['quận 5', 'q.5', 'q5', 'district 5'], name: 'Quận 5', lat: 10.7540, lng: 106.6634 },
   { keywords: ['quận 6', 'q.6', 'q6', 'district 6'], name: 'Quận 6', lat: 10.7481, lng: 106.6352 },
   { keywords: ['quận 7', 'q.7', 'q7', 'district 7'], name: 'Quận 7', lat: 10.7340, lng: 106.7218 },
   { keywords: ['quận 8', 'q.8', 'q8', 'district 8'], name: 'Quận 8', lat: 10.7241, lng: 106.6286 },
+  { keywords: ['quận 9', 'q.9', 'q9', 'district 9'], name: 'Quận 9 (TP. Thủ Đức)', lat: 10.8306, lng: 106.7915 },
   { keywords: ['quận 10', 'q.10', 'q10', 'district 10'], name: 'Quận 10', lat: 10.7716, lng: 106.6672 },
   { keywords: ['quận 11', 'q.11', 'q11', 'district 11'], name: 'Quận 11', lat: 10.7629, lng: 106.6503 },
   { keywords: ['quận 12', 'q.12', 'q12', 'district 12'], name: 'Quận 12', lat: 10.8672, lng: 106.6413 },
@@ -45,12 +57,13 @@ const DISTRICTS = [
   { keywords: ['phú nhuận', 'phu nhuan'], name: 'Phú Nhuận', lat: 10.7992, lng: 106.6803 },
   { keywords: ['tân bình', 'tan binh'], name: 'Tân Bình', lat: 10.8015, lng: 106.6526 },
   { keywords: ['tân phú', 'tan phu'], name: 'Tân Phú', lat: 10.7901, lng: 106.6282 },
-  { keywords: ['thủ đức', 'thu duc'], name: 'TP. Thủ Đức', lat: 10.8494, lng: 106.7537 },
+  { keywords: ['thủ đức', 'thu duc', 'tp thủ đức', 'tp. thủ đức'], name: 'TP. Thủ Đức', lat: 10.8494, lng: 106.7537 },
   { keywords: ['bình tân', 'binh tan'], name: 'Bình Tân', lat: 10.7654, lng: 106.6039 },
   { keywords: ['nhà bè', 'nha be'], name: 'Nhà Bè', lat: 10.6953, lng: 106.7289 },
   { keywords: ['bình chánh', 'binh chanh'], name: 'Bình Chánh', lat: 10.6874, lng: 106.5939 },
   { keywords: ['hóc môn', 'hoc mon'], name: 'Hóc Môn', lat: 10.8839, lng: 106.5898 },
-  { keywords: ['củ chi', 'cu chi'], name: 'Củ Chi', lat: 10.9733, lng: 106.4936 }
+  { keywords: ['củ chi', 'cu chi'], name: 'Củ Chi', lat: 10.9733, lng: 106.4936 },
+  { keywords: ['cần giờ', 'can gio'], name: 'Cần Giờ', lat: 10.4114, lng: 106.9546 }
 ];
 
 function normalizeText(text) {
@@ -158,10 +171,40 @@ function getDistanceBetweenAddresses(pickupAddress, destAddress) {
   };
 }
 
+// Reverse geocode GPS coordinates to nearest landmark or district name
+function reverseGeocode(lat, lng) {
+  if (typeof lat !== 'number' || typeof lng !== 'number') return 'Địa điểm đã chọn';
+
+  let closestName = null;
+  let minDist = Infinity;
+
+  for (const loc of KNOWN_LOCATIONS) {
+    const d = calculateDrivingDistanceKm({ lat, lng }, { lat: loc.lat, lng: loc.lng });
+    if (d < minDist) {
+      minDist = d;
+      closestName = loc.name;
+    }
+  }
+
+  for (const dist of DISTRICTS) {
+    const d = calculateDrivingDistanceKm({ lat, lng }, { lat: dist.lat, lng: dist.lng });
+    if (d < minDist) {
+      minDist = d;
+      closestName = dist.name;
+    }
+  }
+
+  if (minDist <= 1.8 && closestName) {
+    return closestName;
+  }
+  return `Tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+}
+
 module.exports = {
   KNOWN_LOCATIONS,
   DISTRICTS,
   geocodeAddress,
+  reverseGeocode,
   calculateDrivingDistanceKm,
   getDistanceBetweenAddresses
 };
