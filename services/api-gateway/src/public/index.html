@@ -233,6 +233,120 @@
       border-color: #3B82F6;
     }
 
+    /* Radar Search Animation */
+    .radar-box {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      border-radius: 50%;
+      border: 2px solid rgba(16, 185, 129, 0.5);
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(9, 13, 22, 0.9) 70%);
+      overflow: hidden;
+    }
+    .radar-sweep {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      transform-origin: 0 0;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(16, 185, 129, 0.8) 60deg, transparent 61deg);
+      animation: radar-spin 1.8s linear infinite;
+    }
+    @keyframes radar-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Lifecycle Stepper Buttons */
+    .lifecycle-step-btn {
+      font-weight: 600;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      transition: all 0.25s ease;
+      border: 1px solid #374151;
+      background: #1A2438;
+      color: #94A3B8;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      cursor: pointer;
+    }
+    .lifecycle-step-btn:hover:not(:disabled) {
+      border-color: #3B82F6;
+      color: #F8FAFC;
+      background: #25334E;
+      transform: translateY(-1px);
+    }
+    .lifecycle-step-btn.btn-active-step {
+      border-color: #10B981;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34D399;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+      animation: pulse-border 1.8s infinite;
+    }
+    .lifecycle-step-btn.btn-done-step {
+      border-color: #059669;
+      background: #064E3B;
+      color: #6EE7B7;
+    }
+
+    /* Realistic VietQR Card */
+    .vietqr-card {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .vietqr-frame {
+      background: #FFFFFF;
+      padding: 8px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+    .vietqr-img {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Smartphone Simulator Modal */
+    .phone-simulator-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-body {
+      width: 360px;
+      background: #0B1120;
+      border: 3px solid #38BDF8;
+      border-radius: 32px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.3);
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .phone-notch {
+      width: 110px;
+      height: 18px;
+      background: #000000;
+      border-radius: 0 0 12px 12px;
+      margin: 0 auto 8px;
+    }
+
     .event-log-box {
       background: #090E17;
       border: 1px solid #1E293B;
@@ -471,80 +585,181 @@
                 </div>
                 <div>
                   <span class="badge bg-warning text-dark fw-bold px-2 py-1" id="currentTripStatus">Searching</span>
-                  <button class="btn btn-sm btn-outline-danger ms-2" onclick="cancelTrip()">Hủy chuyến</button>
+                  <button class="btn btn-sm btn-outline-danger ms-2" onclick="cancelTrip()"><i class="fa-solid fa-xmark me-1"></i>Hủy chuyến</button>
                 </div>
               </div>
 
-              <!-- Matched Driver Card -->
+              <!-- 1. Radar Searching Animation Box -->
+              <div id="radarSearchingBox" class="p-3 my-2 text-center rounded border border-warning border-opacity-50 bg-dark bg-opacity-80">
+                <div class="radar-box mb-2">
+                  <div class="radar-sweep"></div>
+                </div>
+                <h6 class="text-warning mb-1 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i>Đang tìm tài xế gần bạn nhất...</h6>
+                <div class="small text-secondary" id="radarSubtext">Đang phát tín hiệu kết nối tài xế trong bán kính 2.5 km...</div>
+              </div>
+
+              <!-- 2. Matched Driver Profile Card -->
               <div id="matchedDriverCard" class="p-3 my-2 rounded border border-success bg-success bg-opacity-10 d-none">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="mb-1 text-light fw-bold" id="matchedDriverName">Lê Văn Tài</h6>
-                    <div class="small text-secondary">
-                      Phương tiện: <strong class="text-light" id="matchedDriverVehicle">Toyota Vios 2024</strong> | 
-                      Biển số: <span class="badge bg-secondary" id="matchedDriverPlate">59A-12345</span>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <div style="position: relative;">
+                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80" alt="Avatar Tài xế" style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid #10B981; object-fit: cover;">
+                      <span style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background: #10B981; border: 2px solid #0B1120; border-radius: 50%;"></span>
                     </div>
-                    <div class="small text-info mt-1">
-                      <i class="fa-solid fa-star text-warning"></i> <span id="matchedDriverRating">4.9</span> • 
-                      Khoảng cách đón: <strong id="matchedDriverEta">3 phút (1.2 km)</strong>
+                    <div>
+                      <h6 class="mb-0 text-light fw-bold" id="matchedDriverName">Lê Văn Tài</h6>
+                      <div class="small text-secondary mt-1">
+                        Xe: <strong class="text-light" id="matchedDriverVehicle">Toyota Vios 2024 (4 chỗ)</strong>
+                      </div>
+                      <div class="d-flex align-items-center gap-2 mt-1">
+                        <span class="badge bg-secondary text-light font-monospace" id="matchedDriverPlate" style="letter-spacing: 1px; font-size: 12px;">59A-888.66</span>
+                        <span class="small text-warning"><i class="fa-solid fa-star"></i> <strong id="matchedDriverRating">4.95</strong></span>
+                      </div>
                     </div>
                   </div>
+
                   <div class="text-end">
-                    <span class="badge bg-success py-2 px-3">Tài xế đã nhận</span>
+                    <span class="badge bg-success px-2 py-1 mb-1 d-inline-block">Tài xế đã nhận chuyến</span>
+                    <div class="small text-info"><i class="fa-solid fa-location-arrow me-1"></i><span id="matchedDriverEta">3 phút (650m)</span></div>
+                    <div class="mt-1 d-flex gap-1 justify-content-end">
+                      <button class="btn btn-sm btn-outline-info py-0 px-2" onclick="alert('Đang kết nối cuộc gọi đến tài xế: 0918.234.567...')"><i class="fa-solid fa-phone me-1"></i>Gọi</button>
+                      <button class="btn btn-sm btn-outline-light py-0 px-2" onclick="alert('Đang mở khung chat với tài xế...')"><i class="fa-solid fa-comment-dots me-1"></i>Chat</button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Progress bar -->
-              <div class="progress my-3" style="height: 8px; background-color: #1F2937;">
-                <div id="tripProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 20%"></div>
+              <div class="progress my-2" style="height: 8px; background-color: #1F2937;">
+                <div id="tripProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 25%"></div>
               </div>
 
-              <!-- Step progression status indicator -->
-              <div class="d-flex justify-content-between align-items-center small text-secondary pt-2 border-top border-secondary border-opacity-25">
-                <span id="workflowNotice">Đang điều phối tài xế gần nhất...</span>
-                <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-secondary" onclick="manualStatus(3)">Đã đến</button>
-                  <button class="btn btn-outline-secondary" onclick="manualStatus(4)">Đã đón</button>
-                  <button class="btn btn-outline-secondary" onclick="manualStatus(5)">Di chuyển</button>
-                  <button class="btn btn-outline-success" onclick="manualStatus(6)">Hoàn thành</button>
+              <!-- 3. Manual Interactive Lifecycle Stepper Buttons -->
+              <div class="mt-3 pt-2 border-top border-secondary border-opacity-25" id="stepperControlsContainer">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="small fw-bold text-info"><i class="fa-solid fa-sliders me-1"></i>Điều khiển tiến trình chuyến xe (Tùy chỉnh theo ý bạn):</span>
+                  <span class="small text-secondary" id="workflowNotice">Chờ tài xế nhận cuốc...</span>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6 col-md-3">
+                    <button type="button" class="lifecycle-step-btn" id="btnStep3" onclick="manualStatus(3)">
+                      <i class="fa-solid fa-location-dot text-info"></i>
+                      <span>1. Đã tới đón</span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button type="button" class="lifecycle-step-btn" id="btnStep4" onclick="manualStatus(4)">
+                      <i class="fa-solid fa-person-walking text-primary"></i>
+                      <span>2. Khách lên xe</span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button type="button" class="lifecycle-step-btn" id="btnStep5" onclick="manualStatus(5)">
+                      <i class="fa-solid fa-car-side text-warning"></i>
+                      <span>3. Đang di chuyển</span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button type="button" class="lifecycle-step-btn" id="btnStep6" onclick="manualStatus(6)">
+                      <i class="fa-solid fa-flag-checkered text-success"></i>
+                      <span>4. Hoàn thành</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. Thanh Toán & Đánh Giá -->
-        <div class="card">
+        <!-- 2. Thanh Toán Cước & Mã VietQR (BRL12, BRL14 & BRL16) -->
+        <div class="card mb-4" id="paymentSectionCard">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-credit-card me-2 text-success"></i>2. Thanh Toán Cước & Đánh Giá Dịch Vụ</span>
-            <span class="small text-secondary">Nghiệp vụ BRL12, BRL14 & BRL16</span>
+            <span><i class="fa-solid fa-qrcode me-2 text-success"></i>2. Thanh Toán Cước Chuyến Xe & Mã VietQR</span>
+            <span class="badge bg-secondary" id="paymentStatusBadge">Chờ hoàn thành chuyến</span>
           </div>
           <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-5">
-                <label class="form-label small text-secondary">Phương thức thanh toán (BRL13):</label>
-                <select id="paymentMethodSelect" class="form-select">
-                  <option value="2" selected>Thanh toán Điện Tử (Ví Cab / Thẻ / QR)</option>
-                  <option value="1">Tiền Mặt (Thanh toán trực tiếp cho tài xế)</option>
-                </select>
+            <!-- Payment Locked Alert if trip not completed yet -->
+            <div id="paymentLockNotice" class="alert alert-dark border border-secondary border-opacity-50 d-flex align-items-center gap-2 py-2 mb-3">
+              <i class="fa-solid fa-circle-info text-info fs-5"></i>
+              <div class="small">
+                Theo quy định nghiệp vụ <strong>BRL12</strong>: Chuyến xe cần chuyển sang trạng thái <strong>Hoàn thành (Completed)</strong> trước khi thanh toán. Hãy bấm nút <em>"4. Hoàn thành"</em> ở trên để mở khóa thanh toán.
               </div>
-              <div class="col-md-4">
-                <label class="form-label small text-secondary">Cước chuyến xe (VNĐ):</label>
-                <input type="number" id="payAmountInput" class="form-control fw-bold text-warning" value="106400" readonly>
+            </div>
+
+            <!-- VietQR Card Frame -->
+            <div class="vietqr-card mb-3">
+              <div class="row g-3 align-items-center">
+                <!-- QR Code Box -->
+                <div class="col-md-5 text-center">
+                  <div class="vietqr-frame">
+                    <img id="vietqrImage" src="https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=106400&addInfo=CAB5001&accountName=CAB%20SYSTEM%20VIETNAM" alt="VietQR Thanh Toán" class="vietqr-img">
+                  </div>
+                  <div class="small text-secondary mt-1" style="font-size: 11px;">
+                    <i class="fa-solid fa-camera me-1"></i>Quét bằng App Ngân hàng hoặc Ví MoMo, ZaloPay
+                  </div>
+                </div>
+
+                <!-- Account & Memo Details -->
+                <div class="col-md-7">
+                  <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom border-secondary border-opacity-25">
+                    <span class="badge bg-primary px-2 py-1"><i class="fa-solid fa-building-columns me-1"></i>MBBank (Quân Đội)</span>
+                    <span class="text-success fw-bold fs-5" id="qrPayAmountDisplay">106.400 VNĐ</span>
+                  </div>
+
+                  <div class="small mb-1 d-flex justify-content-between">
+                    <span class="text-secondary">Chủ tài khoản:</span>
+                    <strong class="text-light">CAB SYSTEM VIETNAM</strong>
+                  </div>
+
+                  <div class="small mb-1 d-flex justify-content-between align-items-center">
+                    <span class="text-secondary">Số tài khoản:</span>
+                    <div>
+                      <strong class="text-info font-monospace me-2">0987654321</strong>
+                      <button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyText('0987654321', 'Số tài khoản')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                  </div>
+
+                  <div class="small mb-2 d-flex justify-content-between align-items-center">
+                    <span class="text-secondary">Nội dung CK:</span>
+                    <div>
+                      <strong class="text-warning font-monospace me-2" id="qrPayMemoDisplay">CAB5001 THANH TOAN</strong>
+                      <button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyText(document.getElementById('qrPayMemoDisplay').innerText, 'Nội dung CK')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                  </div>
+
+                  <!-- Virtual Payment & Simulated Actions -->
+                  <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-primary fw-bold" onclick="openVirtualPayModal()">
+                      <i class="fa-solid fa-mobile-screen-button me-2"></i>📱 Giả Lập Quét Mã & Thanh Toán (Virtual Pay App)
+                    </button>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-success btn-sm w-50 fw-bold" onclick="quickConfirmPayment()">
+                        <i class="fa-solid fa-bolt me-1"></i>Xác nhận nhanh
+                      </button>
+                      <button class="btn btn-outline-warning btn-sm w-50 fw-bold" onclick="cashPayment()">
+                        <i class="fa-solid fa-money-bill-1 me-1"></i>Tiền mặt
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-success w-100 fw-bold" onclick="processPayment()">
-                  <i class="fa-solid fa-wallet me-1"></i>Thanh Toán
-                </button>
+            </div>
+
+            <!-- Payment Success Alert -->
+            <div id="paymentSuccessAlert" class="alert alert-success d-none align-items-center gap-2 py-2 mb-0">
+              <i class="fa-solid fa-circle-check fs-4 text-success"></i>
+              <div>
+                <strong class="d-block">Giao dịch thanh toán thành công!</strong>
+                <span class="small" id="paymentSuccessDetail">Mã GD: TXN-CAB-1234 • Đã quyết toán vào hệ thống.</span>
               </div>
             </div>
 
             <hr class="border-secondary my-3">
 
-            <div class="row g-3 align-items-center">
+            <!-- 3. Driver Rating Section (BRL14, AC07.5) -->
+            <div class="row g-3 align-items-center" id="ratingSectionBox">
               <div class="col-md-3">
-                <label class="form-label small text-secondary">Đánh giá tài xế (AC07.5):</label>
+                <label class="form-label small text-secondary fw-bold">Đánh giá tài xế (AC07.5):</label>
                 <select id="ratingScoreSelect" class="form-select">
                   <option value="5" selected>★★★★★ (5 sao - Tuyệt vời)</option>
                   <option value="4">★★★★☆ (4 sao - Tốt)</option>
@@ -554,8 +769,8 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label small text-secondary">Nhận xét chuyến đi:</label>
-                <input type="text" id="ratingCommentInput" class="form-control" value="Tài xế lái xe an toàn, đúng giờ và nhiệt tình.">
+                <label class="form-label small text-secondary fw-bold">Nhận xét chuyến đi:</label>
+                <input type="text" id="ratingCommentInput" class="form-control" value="Tài xế lái xe an toàn, lịch sự và đúng giờ.">
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 <button class="btn btn-outline-warning w-100 fw-bold" onclick="submitRating()">
@@ -642,8 +857,86 @@
     </div>
   </div>
 
+  <!-- Virtual Mobile Banking App Simulator Modal -->
+  <div id="virtualPayModal" class="phone-simulator-modal d-none">
+    <div class="phone-body text-light p-3">
+      <!-- Phone Top Bar -->
+      <div class="d-flex justify-content-between align-items-center text-secondary small px-2">
+        <span id="phoneClock">22:38</span>
+        <div class="phone-notch"></div>
+        <div class="d-flex gap-1 align-items-center">
+          <i class="fa-solid fa-signal" style="font-size: 11px;"></i>
+          <i class="fa-solid fa-wifi" style="font-size: 11px;"></i>
+          <i class="fa-solid fa-battery-full text-success" style="font-size: 11px;"></i>
+        </div>
+      </div>
+
+      <!-- App Header -->
+      <div class="d-flex justify-content-between align-items-center mt-2 pb-2 border-bottom border-secondary border-opacity-25 px-1">
+        <div class="d-flex align-items-center gap-2">
+          <div style="background: #2563EB; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">MB</div>
+          <span class="fw-bold fs-6">MBBank Pay</span>
+        </div>
+        <button class="btn btn-sm btn-link text-secondary p-0" onclick="closeVirtualPayModal()"><i class="fa-solid fa-xmark fs-5"></i></button>
+      </div>
+
+      <!-- Body / Transaction Detail -->
+      <div class="p-2" id="phoneModalContent">
+        <div class="text-center my-3">
+          <div class="small text-secondary">Số tiền thanh toán cước xe</div>
+          <div class="fs-3 fw-bold text-success my-1" id="simModalAmount">106.400 đ</div>
+          <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 small">Napas 247 Chuyển nhanh</span>
+        </div>
+
+        <div class="bg-dark bg-opacity-60 rounded p-2 mb-3 border border-secondary border-opacity-25 small">
+          <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-10">
+            <span class="text-secondary">Người thụ hưởng:</span>
+            <strong class="text-light">CAB SYSTEM VIETNAM</strong>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-10">
+            <span class="text-secondary">Tài khoản MBBank:</span>
+            <span class="text-info font-monospace">0987654321</span>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-10">
+            <span class="text-secondary">Nội dung:</span>
+            <span class="text-warning font-monospace" id="simModalMemo">CAB5001 THANH TOAN</span>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span class="text-secondary">Phí giao dịch:</span>
+            <span class="text-success">Miễn phí (0đ)</span>
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary fw-bold py-2" id="simConfirmBtn" onclick="executeVirtualTransfer()">
+            <i class="fa-solid fa-fingerprint me-2"></i>Xác nhận chuyển tiền (Napas 247)
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="closeVirtualPayModal()">Hủy bỏ</button>
+        </div>
+      </div>
+
+      <!-- Processing State -->
+      <div class="p-4 text-center d-none" id="phoneModalProcessing">
+        <div class="spinner-border text-info my-3" style="width: 3rem; height: 3rem;" role="status"></div>
+        <h6 class="text-light fw-bold">Đang xử lý giao dịch...</h6>
+        <div class="small text-secondary">Hệ thống đang kết nối Napas 24/7 và kiểm tra biến động số dư.</div>
+      </div>
+
+      <!-- Success State -->
+      <div class="p-3 text-center d-none" id="phoneModalSuccess">
+        <div class="my-3 text-success">
+          <i class="fa-solid fa-circle-check" style="font-size: 54px;"></i>
+        </div>
+        <h5 class="text-light fw-bold mb-1">Giao dịch thành công!</h5>
+        <div class="text-success fw-bold fs-5 mb-2" id="simSuccessAmount">106.400 đ</div>
+        <div class="small text-secondary mb-3">Mã tham chiếu: <strong class="text-light font-monospace" id="simSuccessCode">TXN-MB-982147</strong></div>
+        <button class="btn btn-success w-100 fw-bold" onclick="finishVirtualPayment()">Đóng & Hoàn tất</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/app.js?v=3.2"></script>
+  <script src="/app.js?v=4.0"></script>
 </body>
 </html>

@@ -393,6 +393,9 @@ function calculateDynamicRoute(isTyping = false) {
   const payInput = document.getElementById('payAmountInput');
   if (payInput) payInput.value = activeAmount;
 
+  // Sync VietQR details with currently calculated fare
+  updateVietQRInfo(currentTrip ? currentTrip.tripId : 5001, activeAmount);
+
   // Flash animation to visibly signify the update
   distEl.classList.remove('flash-update');
   void distEl.offsetWidth; // trigger reflow
@@ -624,12 +627,11 @@ async function loadDriversOnMap() {
 }
 
 // ============================================================================
-// 7. Booking Submission & Lifecycle Workflow
+// 7. Booking Submission & User-Controlled Stepper Lifecycle
 // ============================================================================
 async function submitBooking() {
   const pickup = document.getElementById('pickupInput').value.trim();
   const dest = document.getElementById('destInput').value.trim();
-  const isAuto = document.getElementById('autoDispatchSwitch').checked;
 
   if (!pickup || !dest) {
     alert('Vui lòng nhập đầy đủ điểm đón và điểm đến!');
@@ -658,30 +660,80 @@ async function submitBooking() {
     if (res.ok) {
       currentTrip = data;
 
+      // 1. Show Active Trip Box & Searching Radar
       document.getElementById('activeTripBox').classList.remove('d-none');
       document.getElementById('currentTripId').innerText = data.tripId;
-      document.getElementById('currentTripStatus').innerText = 'Searching (Đang tìm tài xế)';
+      document.getElementById('currentTripStatus').innerText = 'Searching (Đang tìm tài xế...)';
       document.getElementById('currentTripStatus').className = 'badge bg-warning text-dark fw-bold px-2 py-1';
       document.getElementById('tripProgressBar').style.width = '20%';
 
-      logEvent('TRIP_CREATED', `Tạo chuyến #${data.tripId} (${pickup} → ${dest}) - Khoảng cách: ${data.distanceKm} km - Cước: ${Number(data.estimatedFare).toLocaleString()}đ`, 'warning');
+      // Reset Radar & Driver Card
+      const radarBox = document.getElementById('radarSearchingBox');
+      const driverCard = document.getElementById('matchedDriverCard');
+      if (radarBox) radarBox.classList.remove('d-none');
+      if (driverCard) driverCard.classList.add('d-none');
 
-      const driver = data.candidateDriver;
-      if (driver) {
-        document.getElementById('matchedDriverCard').classList.remove('d-none');
-        document.getElementById('matchedDriverName').innerText = driver.fullName;
-        document.getElementById('matchedDriverVehicle').innerText = driver.model || driver.brand;
-        document.getElementById('matchedDriverPlate').innerText = driver.licensePlate;
-        document.getElementById('matchedDriverRating').innerText = driver.rating;
-        document.getElementById('matchedDriverEta').innerText = driver.etaText || '2 phút (0.9 km)';
-      }
+      // Reset lifecycle step buttons
+      resetStepperButtons();
+      document.getElementById('workflowNotice').innerText = 'Hệ thống đang phát tín hiệu tìm tài xế gần bạn nhất...';
+
+      // Update VietQR with this trip ID & fare
+      updateVietQRInfo(data.tripId, Number(data.estimatedFare || payAmountInput.value));
+
+      logEvent('TRIP_CREATED', `Tạo chuyến #${data.tripId} (${pickup} → ${dest}) - Cước: ${Number(data.estimatedFare).toLocaleString()}đ`, 'warning');
 
       loadDriversOnMap();
       loadAdminData();
 
-      if (isAuto && driver) {
-        runAutoDispatchFlow(data.tripId, driver.driverId);
-      }
+      // 2. Realistic Search Delay: After 2.2s, driver receives and accepts the trip
+      const candidateDriver = data.candidateDriver || {
+        driverId: 88,
+        fullName: 'Lê Văn Tài',
+        model: 'Toyota Vios 2024',
+        licensePlate: '59A-888.66',
+        rating: 4.95,
+        etaText: '2 phút (650m)'
+      };
+
+      setTimeout(async () => {
+        try {
+          const resp = await fetch(`/api/trips/${data.tripId}/driver-response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driverId: candidateDriver.driverId, action: 'ACCEPT' })
+          });
+
+          if (resp.ok) {
+            // Hide Radar, Display Matched Driver Profile
+            if (radarBox) radarBox.classList.add('d-none');
+            if (driverCard) {
+              driverCard.classList.remove('d-none');
+              document.getElementById('matchedDriverName').innerText = candidateDriver.fullName;
+              document.getElementById('matchedDriverVehicle').innerText = candidateDriver.model || candidateDriver.brand || 'Ô tô tiêu chuẩn';
+              document.getElementById('matchedDriverPlate').innerText = candidateDriver.licensePlate || '59A-888.66';
+              document.getElementById('matchedDriverRating').innerText = candidateDriver.rating || '4.95';
+              document.getElementById('matchedDriverEta').innerText = candidateDriver.etaText || '2 phút (650m)';
+            }
+
+            document.getElementById('currentTripStatus').innerText = 'DriverAccepted';
+            document.getElementById('currentTripStatus').className = 'badge bg-primary px-2 py-1';
+            document.getElementById('tripProgressBar').style.width = '40%';
+            document.getElementById('workflowNotice').innerText = 'Tài xế đã nhận chuyến! Hãy bấm nút [1. Đã tới đón] dưới đây khi tài xế tới:';
+
+            // Highlight Step 1 button so user can advance when ready
+            const b3 = document.getElementById('btnStep3');
+            if (b3) b3.classList.add('btn-active-step');
+
+            logEvent('DRIVER_ACCEPTED', `Tài xế ${candidateDriver.fullName} (${candidateDriver.licensePlate}) đã nhận chuyến #${data.tripId}`, 'success');
+
+            loadDriversOnMap();
+            loadAdminData();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 2200);
+
     } else {
       alert(data.message || 'Lỗi khi đặt chuyến');
     }
@@ -690,66 +742,27 @@ async function submitBooking() {
   }
 }
 
-function runAutoDispatchFlow(tripId, driverId) {
-  const notice = document.getElementById('workflowNotice');
-  const bar = document.getElementById('tripProgressBar');
-  const statusBadge = document.getElementById('currentTripStatus');
-
-  notice.innerText = '⚡ Auto Dispatch: Hệ thống đang điều phối tài xế gần nhất...';
-  if (autoWorkflowTimer) clearTimeout(autoWorkflowTimer);
-
-  // 1. Driver Accepts (1.2s)
-  autoWorkflowTimer = setTimeout(async () => {
-    try {
-      const resp = await fetch(`/api/trips/${tripId}/driver-response`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driverId, action: 'ACCEPT' })
-      });
-      if (resp.ok) {
-        logEvent('DRIVER_ACCEPTED', `Tài xế đã nhận chuyến #${tripId}`, 'success');
-        statusBadge.innerText = 'DriverAccepted';
-        statusBadge.className = 'badge bg-primary px-2 py-1';
-        bar.style.width = '40%';
-        notice.innerText = 'Tài xế đã nhận chuyến, đang di chuyển đến điểm đón...';
-        loadDriversOnMap();
-        loadAdminData();
-      }
-    } catch {}
-
-    // 2. Driver Arrived (3.2s)
-    autoWorkflowTimer = setTimeout(async () => {
-      await manualStatus(3);
-      bar.style.width = '60%';
-      notice.innerText = 'Tài xế đã đến điểm đón. Chờ khách lên xe...';
-
-      // 3. Passenger Picked Up (5.2s)
-      autoWorkflowTimer = setTimeout(async () => {
-        await manualStatus(4);
-        bar.style.width = '75%';
-        notice.innerText = 'Khách đã lên xe. Chuyến xe bắt đầu khởi hành...';
-
-        // 4. In Progress (7.2s)
-        autoWorkflowTimer = setTimeout(async () => {
-          await manualStatus(5);
-          bar.style.width = '90%';
-          notice.innerText = 'Đang di chuyển theo lộ trình đến điểm đến...';
-
-          // 5. Completed (9.5s)
-          autoWorkflowTimer = setTimeout(async () => {
-            await manualStatus(6);
-            bar.style.width = '100%';
-            bar.className = 'progress-bar bg-success';
-            notice.innerText = '✔ Chuyến xe đã hoàn thành! Vui lòng xác nhận thanh toán.';
-          }, 2300);
-        }, 2000);
-      }, 2000);
-    }, 2000);
-  }, 1200);
+function resetStepperButtons() {
+  const stepIds = ['btnStep3', 'btnStep4', 'btnStep5', 'btnStep6'];
+  stepIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.className = 'lifecycle-step-btn';
+    }
+  });
+  const b3 = document.getElementById('btnStep3');
+  const b4 = document.getElementById('btnStep4');
+  const b5 = document.getElementById('btnStep5');
+  const b6 = document.getElementById('btnStep6');
+  if (b3) b3.innerHTML = '<i class="fa-solid fa-location-dot text-info"></i><span>1. Đã tới đón</span>';
+  if (b4) b4.innerHTML = '<i class="fa-solid fa-person-walking text-primary"></i><span>2. Khách lên xe</span>';
+  if (b5) b5.innerHTML = '<i class="fa-solid fa-car-side text-warning"></i><span>3. Đang di chuyển</span>';
+  if (b6) b6.innerHTML = '<i class="fa-solid fa-flag-checkered text-success"></i><span>4. Hoàn thành</span>';
 }
 
+// User-Controlled Manual Status Transitions
 async function manualStatus(statusId) {
-  if (!currentTrip) return;
+  const tripId = currentTrip ? currentTrip.tripId : 5001;
 
   const names = {
     3: 'DriverArrived',
@@ -759,21 +772,101 @@ async function manualStatus(statusId) {
   };
 
   try {
-    const res = await fetch(`/api/trips/${currentTrip.tripId}/status`, {
+    const res = await fetch(`/api/trips/${tripId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tripStatusId: statusId })
     });
 
     if (res.ok) {
-      logEvent('TRIP_STATUS_UPDATED', `Cập nhật trạng thái chuyến #${currentTrip.tripId} → ${names[statusId]}`, 'info');
-      document.getElementById('currentTripStatus').innerText = names[statusId];
-      if (statusId === 6) {
-        document.getElementById('currentTripStatus').className = 'badge bg-success px-2 py-1';
+      const statusBadge = document.getElementById('currentTripStatus');
+      const notice = document.getElementById('workflowNotice');
+      const bar = document.getElementById('tripProgressBar');
+
+      logEvent('TRIP_STATUS_UPDATED', `Chuyển trạng thái chuyến #${tripId} → ${names[statusId]}`, 'info');
+      if (statusBadge) statusBadge.innerText = names[statusId];
+
+      const b3 = document.getElementById('btnStep3');
+      const b4 = document.getElementById('btnStep4');
+      const b5 = document.getElementById('btnStep5');
+      const b6 = document.getElementById('btnStep6');
+
+      if (statusId === 3) {
+        // Step 1 done -> Step 2 active
+        if (b3) {
+          b3.className = 'lifecycle-step-btn btn-done-step';
+          b3.innerHTML = '<i class="fa-solid fa-check text-success"></i><span>✔ 1. Đã tới đón</span>';
+        }
+        if (b4) b4.classList.add('btn-active-step');
+        if (bar) bar.style.width = '60%';
+        if (notice) notice.innerText = 'Tài xế đã có mặt tại điểm đón! Hãy bấm [2. Khách lên xe] khi bạn vào xe:';
+        if (statusBadge) statusBadge.className = 'badge bg-info text-dark px-2 py-1';
+
+        // Move driver marker on map next to pickup
+        if (pickupMarker && driverMarkers.length > 0) {
+          const pLat = pickupMarker.getLatLng();
+          driverMarkers[0].setLatLng([pLat.lat + 0.0003, pLat.lng + 0.0003]);
+        }
+      } else if (statusId === 4) {
+        // Step 2 done -> Step 3 active
+        if (b4) {
+          b4.className = 'lifecycle-step-btn btn-done-step';
+          b4.innerHTML = '<i class="fa-solid fa-check text-success"></i><span>✔ 2. Khách lên xe</span>';
+        }
+        if (b5) b5.classList.add('btn-active-step');
+        if (bar) bar.style.width = '75%';
+        if (notice) notice.innerText = 'Khách đã lên xe an toàn! Hãy bấm [3. Đang di chuyển] để bắt đầu hành trình:';
+        if (statusBadge) statusBadge.className = 'badge bg-primary px-2 py-1';
+      } else if (statusId === 5) {
+        // Step 3 done -> Step 4 active
+        if (b5) {
+          b5.className = 'lifecycle-step-btn btn-done-step';
+          b5.innerHTML = '<i class="fa-solid fa-check text-success"></i><span>✔ 3. Đang di chuyển</span>';
+        }
+        if (b6) b6.classList.add('btn-active-step');
+        if (bar) bar.style.width = '90%';
+        if (notice) notice.innerText = 'Xe đang di chuyển trên đường theo lộ trình. Hãy bấm [4. Hoàn thành] khi tới điểm đến:';
+        if (statusBadge) statusBadge.className = 'badge bg-warning text-dark px-2 py-1';
+      } else if (statusId === 6) {
+        // Step 4 done -> Completed!
+        if (b6) {
+          b6.className = 'lifecycle-step-btn btn-done-step';
+          b6.innerHTML = '<i class="fa-solid fa-check text-success"></i><span>✔ 4. Hoàn thành</span>';
+        }
+        if (bar) {
+          bar.style.width = '100%';
+          bar.className = 'progress-bar bg-success';
+        }
+        if (statusBadge) {
+          statusBadge.innerText = 'Completed (Hoàn thành)';
+          statusBadge.className = 'badge bg-success px-2 py-1';
+        }
+        if (notice) notice.innerText = '✔ Chuyến xe đã kết thúc an toàn! Vui lòng tiến hành thanh toán bên dưới.';
+
+        // Unlock Payment Section (BRL12 satisfied)
+        const lockNotice = document.getElementById('paymentLockNotice');
+        if (lockNotice) lockNotice.classList.add('d-none');
+
+        const payBadge = document.getElementById('paymentStatusBadge');
+        if (payBadge) {
+          payBadge.innerText = 'Chờ thanh toán cước';
+          payBadge.className = 'badge bg-warning text-dark';
+        }
+
+        const payCard = document.getElementById('paymentSectionCard');
+        if (payCard) {
+          payCard.classList.remove('flash-update');
+          void payCard.offsetWidth;
+          payCard.classList.add('flash-update');
+          payCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
+
       loadAdminData();
     }
-  } catch (err) {}
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 async function cancelTrip() {
@@ -799,12 +892,142 @@ async function cancelTrip() {
 }
 
 // ============================================================================
-// 8. Payment & Driver Rating (BRL12, BRL16, AC07.5)
+// 8. VietQR & Realistic Virtual Payment Simulator (BRL12, BRL16, AC06.3)
 // ============================================================================
-async function processPayment() {
+function updateVietQRInfo(tripId, amount) {
+  const formattedAmount = Number(amount || 106400).toLocaleString();
+  const memo = `CAB${tripId || 5001} THANH TOAN`;
+
+  const amountDisplay = document.getElementById('qrPayAmountDisplay');
+  const memoDisplay = document.getElementById('qrPayMemoDisplay');
+  const simAmount = document.getElementById('simModalAmount');
+  const simMemo = document.getElementById('simModalMemo');
+  const qrImg = document.getElementById('vietqrImage');
+
+  if (amountDisplay) amountDisplay.innerText = `${formattedAmount} VNĐ`;
+  if (memoDisplay) memoDisplay.innerText = memo;
+  if (simAmount) simAmount.innerText = `${formattedAmount} đ`;
+  if (simMemo) simMemo.innerText = memo;
+
+  if (qrImg) {
+    qrImg.src = `https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${amount || 106400}&addInfo=CAB${tripId || 5001}&accountName=CAB%20SYSTEM%20VIETNAM`;
+  }
+}
+
+function copyText(text, label) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  logEvent('CLIPBOARD', `Đã sao chép ${label || 'nội dung'}: ${text}`, 'info');
+  alert(`📋 Đã sao chép ${label || ''}: ${text}`);
+}
+
+// Open Virtual Smartphone Simulator Modal
+async function openVirtualPayModal() {
   const tripId = currentTrip ? currentTrip.tripId : 5001;
-  const methodId = document.getElementById('paymentMethodSelect').value;
-  const amount = document.getElementById('payAmountInput').value;
+  const statusBadge = document.getElementById('currentTripStatus');
+  const currentStatus = statusBadge ? statusBadge.innerText : '';
+
+  // If trip is not completed yet, ask to complete it first (satisfying BRL12)
+  if (!currentStatus.includes('Completed')) {
+    const ok = confirm('Chuyến xe chưa ở trạng thái "Hoàn thành". Bạn có muốn hệ thống đánh dấu hoàn thành chuyến đi và mở thanh toán ảo ngay không?');
+    if (!ok) return;
+    await manualStatus(6);
+  }
+
+  // Update clock on simulated phone
+  const now = new Date();
+  const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  const phoneClock = document.getElementById('phoneClock');
+  if (phoneClock) phoneClock.innerText = timeStr;
+
+  // Reset phone screens
+  document.getElementById('phoneModalContent').classList.remove('d-none');
+  document.getElementById('phoneModalProcessing').classList.add('d-none');
+  document.getElementById('phoneModalSuccess').classList.add('d-none');
+
+  document.getElementById('virtualPayModal').classList.remove('d-none');
+}
+
+function closeVirtualPayModal() {
+  document.getElementById('virtualPayModal').classList.add('d-none');
+}
+
+// Execute Transfer in Simulator
+async function executeVirtualTransfer() {
+  document.getElementById('phoneModalContent').classList.add('d-none');
+  document.getElementById('phoneModalProcessing').classList.remove('d-none');
+
+  const txnCode = `TXN-MB-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  setTimeout(async () => {
+    document.getElementById('phoneModalProcessing').classList.add('d-none');
+    document.getElementById('phoneModalSuccess').classList.remove('d-none');
+    document.getElementById('simSuccessAmount').innerText = document.getElementById('simModalAmount').innerText;
+    document.getElementById('simSuccessCode').innerText = txnCode;
+
+    // Send payment request to backend
+    await executePaymentRequest(2, txnCode);
+  }, 1200);
+}
+
+function finishVirtualPayment() {
+  closeVirtualPayModal();
+
+  const successAlert = document.getElementById('paymentSuccessAlert');
+  if (successAlert) {
+    successAlert.classList.remove('d-none');
+    successAlert.classList.add('d-flex');
+  }
+
+  const payBadge = document.getElementById('paymentStatusBadge');
+  if (payBadge) {
+    payBadge.innerText = 'ĐÃ THANH TOÁN (PAID)';
+    payBadge.className = 'badge bg-success';
+  }
+
+  // Scroll to Rating Section
+  const ratingBox = document.getElementById('ratingSectionBox');
+  if (ratingBox) ratingBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Quick 1-Click Pay Confirmation
+async function quickConfirmPayment() {
+  const statusBadge = document.getElementById('currentTripStatus');
+  const currentStatus = statusBadge ? statusBadge.innerText : '';
+  if (!currentStatus.includes('Completed')) {
+    await manualStatus(6);
+  }
+
+  const txnCode = `TXN-FAST-${Math.floor(100000 + Math.random() * 900000)}`;
+  await executePaymentRequest(2, txnCode);
+  finishVirtualPayment();
+}
+
+// Cash Payment
+async function cashPayment() {
+  const statusBadge = document.getElementById('currentTripStatus');
+  const currentStatus = statusBadge ? statusBadge.innerText : '';
+  if (!currentStatus.includes('Completed')) {
+    await manualStatus(6);
+  }
+
+  const txnCode = `TXN-CASH-${Math.floor(100000 + Math.random() * 900000)}`;
+  await executePaymentRequest(1, txnCode);
+  finishVirtualPayment();
+}
+
+// Core Payment API caller
+async function executePaymentRequest(methodId, txnCode) {
+  const tripId = currentTrip ? currentTrip.tripId : 5001;
+  const amount = document.getElementById('payAmountInput').value || 106400;
 
   try {
     const res = await fetch(`/api/trips/${tripId}/payments`, {
@@ -812,24 +1035,29 @@ async function processPayment() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         paymentMethodId: Number(methodId),
-        amount: Number(amount)
+        amount: Number(amount),
+        transactionCode: txnCode
       })
     });
 
     const data = await res.json();
     if (res.ok) {
-      logEvent('PAYMENT_COMPLETED', `Thanh toán thành công ${Number(amount).toLocaleString()}đ - Mã GD: ${data.transactionCode}`, 'success');
-      alert(`🎉 Thanh toán cước thành công!\n• Mã giao dịch: ${data.transactionCode}\n• Số tiền: ${Number(amount).toLocaleString()} VNĐ\n• Trạng thái: Thành công`);
+      logEvent('PAYMENT_COMPLETED', `Thanh toán thành công ${Number(amount).toLocaleString()}đ - Mã GD: ${txnCode}`, 'success');
+      const detailEl = document.getElementById('paymentSuccessDetail');
+      if (detailEl) {
+        detailEl.innerText = `Mã GD: ${txnCode} • Số tiền: ${Number(amount).toLocaleString()} VNĐ • Phương thức: ${methodId === 1 ? 'Tiền mặt' : 'VietQR / Điện tử'}`;
+      }
       loadDriversOnMap();
       loadAdminData();
     } else {
-      alert(data.message || 'Lỗi thanh toán');
+      console.warn('Payment response warning:', data.message);
     }
   } catch (err) {
-    alert('Lỗi kết nối tới Payment Service');
+    console.error('Payment error:', err);
   }
 }
 
+// Driver Rating Submission (AC07.5)
 async function submitRating() {
   const tripId = currentTrip ? currentTrip.tripId : 5001;
   const score = document.getElementById('ratingScoreSelect').value;
@@ -841,14 +1069,14 @@ async function submitRating() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         score: Number(score),
-        comment: comment || 'Dịch vụ rất tốt'
+        comment: comment || 'Tài xế rất lịch sự và chuyên nghiệp'
       })
     });
 
     const data = await res.json();
     if (res.ok) {
       logEvent('RATING_SUBMITTED', `Gửi đánh giá ${score}★ cho chuyến #${tripId}`, 'success');
-      alert(`⭐ Cảm ơn bạn đã đánh giá ${score} sao cho tài xế!`);
+      alert(`⭐ Cảm ơn bạn đã gửi đánh giá ${score} sao cho chuyến xe #${tripId}!`);
       loadDriversOnMap();
     } else {
       alert(data.message || 'Lỗi gửi đánh giá');
