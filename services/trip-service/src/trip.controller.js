@@ -2,7 +2,7 @@ const { calculateFare } = require('./fare.calculator');
 const { sharedBus } = require('../../../shared/event-bus');
 const { getDistanceBetweenAddresses, geocodeAddress, reverseGeocode, calculateDrivingDistanceKm } = require('../../../shared/geo-helper');
 
-const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:3002';
 
 class TripController {
   constructor(db) {

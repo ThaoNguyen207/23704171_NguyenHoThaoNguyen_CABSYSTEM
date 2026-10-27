@@ -205,9 +205,23 @@ function createApp() {
     await nextMiddleware();
   }
 
-  app.listen = function (port, callback) {
+  app.listen = function (port, ...args) {
     const server = http.createServer(handleRequest);
-    return server.listen(port, callback);
+    let host = '0.0.0.0';
+    let callback = null;
+
+    if (args.length === 1) {
+      if (typeof args[0] === 'function') {
+        callback = args[0];
+      } else {
+        host = args[0];
+      }
+    } else if (args.length >= 2) {
+      host = args[0];
+      callback = args[1];
+    }
+
+    return server.listen(port, host, callback);
   };
 
   return app;

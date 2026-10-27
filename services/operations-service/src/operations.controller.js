@@ -1,9 +1,9 @@
 const { verifyPassword, signJwt } = require('../../../shared/jwt');
 
-const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://localhost:3003';
-const getPaymentServiceUrl = () => process.env.PAYMENT_SERVICE_URL || 'http://localhost:3004';
-const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
-const getCustomerServiceUrl = () => process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3001';
+const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:3003';
+const getPaymentServiceUrl = () => process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1:3004';
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:3002';
+const getCustomerServiceUrl = () => process.env.CUSTOMER_SERVICE_URL || 'http://127.0.0.1:3001';
 
 class OperationsController {
   constructor(db) {

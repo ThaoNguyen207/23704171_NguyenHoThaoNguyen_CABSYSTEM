@@ -42,11 +42,15 @@ async function bootstrap() {
     notification.server.close();
     operations.server.close();
     gateway.server.close();
-    process.exit(0);
+    if (require.main === module) {
+      process.exit(0);
+    }
   }
 
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
+
+  return { customer, driver, trip, payment, notification, operations, gateway, cleanup };
 }
 
 if (require.main === module) {

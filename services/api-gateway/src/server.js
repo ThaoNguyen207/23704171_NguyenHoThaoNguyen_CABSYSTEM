@@ -8,12 +8,12 @@ const logger = createLogger('APIGateway', 'bright');
 const PORT = process.env.PORT || 3000;
 
 const SERVICES = {
-  customer: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3001',
-  driver: process.env.DRIVER_SERVICE_URL || 'http://localhost:3002',
-  trip: process.env.TRIP_SERVICE_URL || 'http://localhost:3003',
-  payment: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3004',
-  notification: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3005',
-  operations: process.env.OPERATIONS_SERVICE_URL || 'http://localhost:3006'
+  customer: process.env.CUSTOMER_SERVICE_URL || 'http://127.0.0.1:3001',
+  driver: process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:3002',
+  trip: process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:3003',
+  payment: process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1:3004',
+  notification: process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:3005',
+  operations: process.env.OPERATIONS_SERVICE_URL || 'http://127.0.0.1:3006'
 };
 
 function createGateway() {

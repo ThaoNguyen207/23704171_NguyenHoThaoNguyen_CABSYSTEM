@@ -1,8 +1,8 @@
 const crypto = require('node:crypto');
 const { sharedBus } = require('../../../shared/event-bus');
 
-const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://localhost:3003';
-const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
+const getTripServiceUrl = () => process.env.TRIP_SERVICE_URL || 'http://127.0.0.1:3003';
+const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://127.0.0.1:3002';
 
 class PaymentController {
   constructor(db) {
