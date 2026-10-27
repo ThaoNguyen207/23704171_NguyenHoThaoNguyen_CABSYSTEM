@@ -7,6 +7,9 @@ function setupTripRoutes(app, db) {
     res.json({ service: 'trip-service', status: 'UP', port: 3003 });
   });
 
+  // Dynamic route estimation (distance & fare preview)
+  app.post('/api/trips/estimate', controller.estimateRoute);
+
   // OpenAPI specs & requirements
   app.post('/api/trips', controller.createTrip);
   app.post('/api/trips/:tripId/driver-response', controller.driverResponse);

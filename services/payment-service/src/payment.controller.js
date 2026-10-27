@@ -29,6 +29,14 @@ class PaymentController {
       }
     } catch {}
 
+    // BRL12: Chỉ tính cước & cho phép thanh toán khi chuyến đã hoàn thành
+    if (trip && trip.tripStatusId && trip.tripStatusId !== 6) {
+      return res.status(400).json({
+        error: 'TRIP_NOT_COMPLETED',
+        message: 'Chỉ có thể thanh toán khi chuyến xe đã ở trạng thái Hoàn thành (Completed) (BRL12)'
+      });
+    }
+
     // Check if already paid
     const existing = this.db.get(
       'SELECT paymentId, paymentStatus FROM payments WHERE tripId = ? AND paymentStatus = ?',
@@ -106,15 +114,25 @@ class PaymentController {
     let did = driverId ? Number(driverId) : null;
     let cid = customerId ? Number(customerId) : 1;
 
-    if (!did) {
-      try {
-        const resp = await fetch(`${getTripServiceUrl()}/api/trips/${tripId}`);
-        if (resp.ok) {
-          const trip = await resp.json();
-          did = trip.driverId;
-          cid = trip.customerId || cid;
-        }
-      } catch {}
+    let trip = null;
+    try {
+      const resp = await fetch(`${getTripServiceUrl()}/api/trips/${tripId}`);
+      if (resp.ok) {
+        trip = await resp.json();
+      }
+    } catch {}
+
+    // BRL14: Chỉ đánh giá sau khi chuyến hoàn thành
+    if (trip && trip.tripStatusId && trip.tripStatusId !== 6) {
+      return res.status(400).json({
+        error: 'TRIP_NOT_COMPLETED',
+        message: 'Chỉ có thể đánh giá tài xế sau khi chuyến xe đã hoàn thành (BRL14)'
+      });
+    }
+
+    if (!did && trip) {
+      did = trip.driverId;
+      cid = trip.customerId || cid;
     }
 
     if (!did) {

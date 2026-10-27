@@ -1,25 +1,37 @@
-# ⚡ XANH SM – HỆ THỐNG ĐẶT XE ĐIỆN THÔNG MINH (MICROSERVICES)
+# 🚖 CAB SYSTEM – NỀN TẢNG ĐẶT XE CÔNG NGHỆ THÔNG MINH (MICROSERVICES)
 
-Dự án triển khai kiến trúc **Microservices** cho hệ thống đặt xe điện thông minh theo mô hình **Xanh SM (GSM - Green Smart Mobility)**, dựa trên tài liệu đặc tả yêu cầu nghiệp vụ SRS (`srs.md`), các đặc tả OpenAPI 3.0 (`API document/`) và bộ kịch bản kiểm thử (`TestCase/`).
+Dự án triển khai kiến trúc **Microservices** cho hệ thống đặt xe công nghệ trực tuyến **CAB SYSTEM**, dựa trên tài liệu đặc tả yêu cầu nghiệp vụ SRS (`srs.md`), các đặc tả OpenAPI 3.0 (`API document/`) và bộ kịch bản kiểm thử (`TestCase/`).
 
 ---
 
-## 🌟 Các Tính Năng Đột Phá Chuẩn Xanh SM
+## 🌟 Các Tính Năng Nghiệp Vụ & Kỹ Thuật Nổi Bật
 
-1. **Đội xe điện VinFast phong phú (20+ xe trực tuyến)**:
-   - **Xanh SM Bike**: VinFast Feliz S, VinFast Evo 200, VinFast Klara S (xe máy điện êm ái, tiết kiệm).
-   - **Xanh SM Taxi**: VinFast VF 5 Plus, VinFast VF e34 (ô tô 4 chỗ tiêu chuẩn, máy lạnh mát rượi, không mùi xăng xe).
-   - **Xanh SM Luxury**: VinFast VF 8, VinFast VF 9 (SUV điện sang trọng đẳng cấp VIP).
-   - Quản lý định vị GPS tọa độ thực tế khắp TP.HCM (Quận 1, Quận 3, Landmark 81, Sân bay Tân Sơn Nhất, Crescent Mall Q.7, Thủ Đức...) kèm thông số pin (`batteryLevel %`).
-2. **Thuật toán điều phối AI Smart Dispatch**:
-   - Tự động tính khoảng cách thực tế giữa điểm đón và các tài xế xung quanh theo công thức **Haversine GPS** (`latitude`, `longitude`).
-   - Sắp xếp và tự động gán chuyến cho tài xế gần nhất với thời gian đón (ETA) tối ưu nhất.
-3. **Chế độ Auto-Pilot (Tự động hóa hoàn toàn luồng đặt xe)**:
-   - Khi khách bấm đặt chuyến, hệ thống tự động tìm tài xế gần nhất -> Tự động nhận chuyến trong 1.5s -> Mô phỏng hành trình di chuyển thực tế (Đến điểm đón → Đón khách → Di chuyển → Hoàn thành) -> Hiện thông báo thanh toán và đánh giá sao.
-4. **Theo dõi giảm phát thải CO2**:
-   - Tự động tính toán lượng khí thải CO2 cắt giảm được trên mỗi km di chuyển bằng xe điện so với xe xăng truyền thống.
-5. **Bản đồ Radar Trực Tuyến**:
-   - Giao diện Dashboard hiển thị radar theo dõi 20 xe điện VinFast theo thời gian thực.
+1. **Tính Khoảng Cách Lộ Trình Động (Dynamic Geocoding & Distance Calculation)**:
+   - Tích hợp công cụ định vị địa lý (`shared/geo-helper.js`): Người dùng có thể **nhập bất kỳ địa chỉ đón và đến nào** (hoặc chọn gợi ý / click trực tiếp trên bản đồ).
+   - Hệ thống tự động phân tích địa chỉ, quy đổi tọa độ GPS và áp dụng công thức **Haversine có bù trừ độ uốn khúc đường bộ thực tế (Road Circuity Factor ~ 1.25x - 1.35x)** để tính ra **khoảng cách lái xe thực tế chính xác (km)**.
+   - Khoảng cách thay đổi tự động ngay khi người dùng gõ phím, kéo theo giá cước được cập nhật trực tiếp theo thời gian thực.
+2. **Cước Phí Phụ Thuộc Chặt Chẽ Vào Khoảng Cách (Business Rule E08 & BRL12)**:
+   - Giá cước được tính toán tự động dựa trên công thức quy định:
+     $$\text{Tổng cước} = \text{Giá mở cửa (2km đầu)} + \max(0, \text{Khoảng cách} - 2) \times \text{Đơn giá/km}$$
+   - Hỗ trợ 3 phân hạng phương tiện:
+     - **Cab Bike**: 12.000đ mở cửa + 5.000đ/km tiếp theo.
+     - **Cab Car 4-Chỗ**: 20.000đ mở cửa + 12.000đ/km tiếp theo.
+     - **Cab Car 7-Chỗ**: 28.000đ mở cửa + 16.000đ/km tiếp theo.
+3. **Bản Đồ OpenStreetMap / Leaflet Tương Tác Trực Tuyến**:
+   - Giao diện Dashboard tích hợp bản đồ số thời gian thực:
+     - 🟢 Điểm đón (Green Marker) và 🔴 Điểm đến (Red Marker).
+     - Đường polyline lộ trình trực quan nối giữa hai điểm.
+     - Hiển thị vị trí thực của **20+ tài xế** đang hoạt động khắp TP.HCM.
+4. **Điều Phối Tài Xế Tự Động (AI Smart Dispatch)**:
+   - Tự động quét và phân công chuyến đi cho tài xế ở trạng thái `READY` có khoảng cách gần điểm đón nhất.
+   - Hỗ trợ chế độ Auto-Dispatch mô phỏng toàn bộ tiến trình vòng đời chuyến xe:
+     `Searching` → `DriverAccepted` → `DriverArrived` → `PassengerPickedUp` → `InProgress` → `Completed`.
+   - Cơ chế Auto-Cascade: Nếu tài xế từ chối hoặc hết giờ, hệ thống tự động chuyển tiếp sang tài xế thứ 2, thứ 3 tiếp theo (SRS `EX06`, `EX07`).
+5. **Logic Nghiệp Vụ Chặt Chẽ Tại Backend**:
+   - Chỉ cho phép thanh toán khi chuyến đi đã ở trạng thái `Completed` (`BRL12`).
+   - Ngăn chặn thanh toán trùng lặp cho cùng một chuyến đi (`BRL16`).
+   - Chỉ cho phép đánh giá tài xế khi chuyến đi đã hoàn thành (`BRL14`), điểm đánh giá bắt buộc từ 1 đến 5 sao (`AC07.5`).
+   - Khi tài xế nhận chuyến, trạng thái chuyển thành `BUSY` (`BRL10`); khi thanh toán hoàn tất hoặc chuyến bị hủy, tài xế tự động chuyển về `READY`.
 
 ---
 
@@ -29,14 +41,14 @@ Hệ thống được thiết kế theo chuẩn phân rã Domain-Driven Design (
 
 ```mermaid
 flowchart TD
-    Client["Khách hàng / Tài xế / Admin CMS"] -->|HTTP / JSON| Gateway["API Gateway (:3000)\nReverse Proxy, CORS, Swagger UI, Web Console Xanh SM"]
+    Client["Khách hàng / Tài xế / Admin CMS"] -->|HTTP / JSON| Gateway["API Gateway (:3000)\nReverse Proxy, CORS, Swagger UI, Interactive Map UI"]
 
-    Gateway -->|/api/customers| S1["Customer Service (:3001)\nĐăng ký, Đăng nhập, JWT, Hồ sơ"]
-    Gateway -->|/api/drivers| S2["Driver Service (:3002)\nĐội xe 20+ VinFast, Trạng thái READY/BUSY, GPS Radar"]
-    Gateway -->|/api/trips| S3["Trip Service (:3003)\nĐặt chuyến, AI Smart Dispatch, Auto-Pilot, Trạng thái chuyến"]
-    Gateway -->|/api/payments| S4["Payment & Rating Service (:3004)\nThanh toán Ví Xanh SM / Tiền mặt, Đánh giá 1-5★"]
-    Gateway -->|/api/notifications| S5["Notification Service (:3005)\nLịch sử thông báo, Gửi SMS/Email/Push"]
-    Gateway -->|/api/admin| S6["Operations / Admin Service (:3006)\nGiám sát Real-time, Đối soát giao dịch, KPI"]
+    Gateway -->|/api/customers| S1["Customer Service (:3001)\nĐăng ký (UC01), Đăng nhập (UC02), JWT"]
+    Gateway -->|/api/drivers| S2["Driver Service (:3002)\nĐội xe 20+ tài xế, Trạng thái READY/BUSY, GPS Map"]
+    Gateway -->|/api/trips| S3["Trip Service (:3003)\nTính khoảng cách động, Tính cước (E08), Điều phối tài xế (UC07)"]
+    Gateway -->|/api/payments| S4["Payment & Rating Service (:3004)\nThanh toán (UC19/20), Đánh giá 1-5★ (UC22)"]
+    Gateway -->|/api/notifications| S5["Notification Service (:3005)\nLịch sử thông báo, Gửi SMS/Email/Push (UC24)"]
+    Gateway -->|/api/admin| S6["Operations / Admin Service (:3006)\nGiám sát Real-time (UC28), Đối soát GD (UC30)"]
 
     S1 -.->|EventBus / Pub-Sub| EventBus["Microservices Event Bus\nAsynchronous Events (TRIP_CREATED, DRIVER_ACCEPTED, PAYMENT_COMPLETED)"]
     S2 -.->|EventBus| EventBus
@@ -52,34 +64,17 @@ flowchart TD
 
 | Service | Port | Database (Database-per-Service) | Trách nhiệm chính & Use Case | OpenAPI Spec |
 |---|:---:|---|---|---|
-| **API Gateway** | `3000` | In-memory Routing Cache | Điểm vào duy nhất (Single Entry Point), Reverse proxy, Web Dashboard Xanh SM, Swagger UI | `Customer.yaml`, `Driver.yaml`, `Trip.yaml`, `Payment.yaml`, `Notification.yaml`, `Operations.yaml` |
+| **API Gateway** | `3000` | In-memory Routing Cache | Điểm vào duy nhất (Single Entry Point), Reverse proxy, Web Dashboard bản đồ trực quan, Swagger UI | `Customer.yaml`, `Driver.yaml`, `Trip.yaml`, `Payment.yaml`, `Notification.yaml`, `Operations.yaml` |
 | **Customer Service** | `3001` | `data/customers.db` (SQLite) | Đăng ký khách hàng (UC01), Đăng nhập (UC02), Cấp JWT token, Quản lý tài khoản | `API document/Customer.yaml` |
-| **Driver Service** | `3002` | `data/drivers.db` (SQLite) | Đội xe 20+ tài xế VinFast, Trạng thái READY/BUSY/OFFLINE (UC11, BRL04), Danh sách phương tiện (UC17), Tìm tài xế gần nhất theo GPS | `API document/Driver.yaml` |
-| **Trip Service** | `3003` | `data/trips.db` (SQLite) | Đặt chuyến xe (UC04), AI Dispatch tìm tài xế gần nhất, Tính cước Xanh SM (E08), Accept/Reject (UC13, UC14), Chuyển trạng thái (UC15), Hủy chuyến (AC14) | `API document/Trip.yaml` |
-| **Payment & Rating Service** | `3004` | `data/payments.db` (SQLite) | Thanh toán Ví điện tử Xanh SM / Tiền mặt (UC19, UC20, BRL16), Đánh giá 1-5 sao kèm nhận xét (UC22, AC07.5) | `API document/Payment.yaml` |
+| **Driver Service** | `3002` | `data/drivers.db` (SQLite) | Đội xe 20+ tài xế, Trạng thái READY/BUSY/OFFLINE (UC11, BRL04), Danh sách phương tiện (UC17), Tìm tài xế gần nhất theo GPS | `API document/Driver.yaml` |
+| **Trip Service** | `3003` | `data/trips.db` (SQLite) | Tính khoảng cách lộ trình động (`/api/trips/estimate`), Đặt chuyến xe (UC04), Tính cước (E08), Phân công tài xế (UC07), Chuyển trạng thái (UC15), Hủy chuyến (AC14) | `API document/Trip.yaml` |
+| **Payment & Rating Service** | `3004` | `data/payments.db` (SQLite) | Xử lý thanh toán Tiền mặt / Điện tử (UC19, UC20, BRL16), Đánh giá tài xế 1-5 sao kèm nhận xét (UC22, AC07.5) | `API document/Payment.yaml` |
 | **Notification Service** | `3005` | `data/notifications.db` (SQLite) | Lịch sử thông báo (UC24, FR37-FR42), Tự động gửi thông báo theo thời gian thực qua sự kiện | `API document/Notification.yaml` |
 | **Operations Service** | `3006` | `data/operations.db` (SQLite) | Giám sát chuyến xe thời gian thực (UC28, AC08.5), Tra cứu đối soát giao dịch (UC30), Phân quyền Admin/Operator (E14, E15) | `API document/Operations.yaml` |
 
 ---
 
-## 💡 3. Các Nguyên Tắc & Design Patterns Áp Dụng
-
-1. **Database per Service Pattern**: Mỗi microservice sở hữu cơ sở dữ liệu quan hệ SQL riêng biệt (`node:sqlite` tích hợp sẵn trong Node.js), đảm bảo tính đóng gói (encapsulation) và độc lập dữ liệu tuyệt đối, không chia sẻ trực tiếp database giữa các service.
-2. **API Gateway Pattern**: Client không cần biết địa chỉ port của từng service. Mọi tương tác đi qua cổng `3000` được định tuyến tự động.
-3. **Event-Driven Architecture (EDA)**: Giao tiếp bất đồng bộ qua `EventBus` giúp các service phản ứng với sự kiện mà không bị phụ thuộc cứng (loose coupling):
-   - `TRIP_CREATED`: Notification Service gửi thông báo cho khách và tài xế ứng viên.
-   - `DRIVER_ACCEPTED`: Driver Service chuyển trạng thái tài xế sang `BUSY`.
-   - `TRIP_COMPLETED`: Kích hoạt yêu cầu tính cước và thanh toán.
-   - `PAYMENT_COMPLETED`: Driver Service tự động chuyển trạng thái tài xế về lại `READY`.
-4. **AI Smart Dispatch**: Sử dụng công thức Haversine để tính khoảng cách và tự động phân phối chuyến cho tài xế VinFast gần nhất.
-5. **Zero-install Dependency Friction**: Sử dụng toàn bộ module chuẩn của Node.js (`node:http`, `node:sqlite`, `node:crypto`, `node:test`, `node:assert`), không lo lắng lỗi `node_modules` hay thiếu compiler C++ trên Windows.
-
----
-
-## 🚀 4. Hướng dẫn Cài đặt & Khởi chạy
-
-### Yêu cầu môi trường
-- **Node.js**: Phiên bản 22+ (Khuyên dùng v26+)
+## 🚀 3. Hướng dẫn Khởi chạy Hệ thống
 
 ### Cách 1: Khởi chạy tất cả Microservices (Khuyên dùng)
 ```bash
@@ -88,8 +83,8 @@ node start-all.js
 npm start
 ```
 
-Khi chạy thành công, truy cập:
-- 🌐 **Web Dashboard Xanh SM Trực Quan**: [http://localhost:3000/](http://localhost:3000/)
+Khi chạy thành công, mở trình duyệt:
+- 🌐 **Web Dashboard Bản Đồ Trực Quan**: [http://localhost:3000/](http://localhost:3000/)
 - 📖 **OpenAPI / Swagger Explorer**: [http://localhost:3000/docs](http://localhost:3000/docs)
 - 🩺 **Kiểm tra trạng thái Microservices**: [http://localhost:3000/health](http://localhost:3000/health)
 
@@ -100,9 +95,9 @@ docker compose up --build
 
 ---
 
-## 🧪 5. Kiểm thử Tự động (Automated Test Suite)
+## 🧪 4. Kiểm thử Tự động (Automated Test Suite)
 
-Dự án cung cấp bộ kiểm thử toàn diện gồm **34 test cases** tương ứng 100% với tài liệu đặc tả và các tính năng nâng cao:
+Dự án cung cấp bộ kiểm thử toàn diện gồm **35 test cases** bao gồm kiểm thử phân rã dịch vụ, tính khoảng cách địa lý động, điều phối tài xế và kịch bản tích hợp xuyên suốt:
 
 ```bash
 npm test
@@ -113,16 +108,16 @@ node --test tests/*.test.js
 **Kết quả kiểm thử thực tế:**
 ```text
 ✔ Customer Service Tests (UC01, UC02) - 5/5 PASSED
-✔ Driver Service Tests (UC11, UC17, Xanh SM Fleet) - 6/6 PASSED
-✔ Trip Service Tests (UC04, UC13, UC14, UC15) - 4/4 PASSED
+✔ Driver Service Tests (UC11, UC17, Fleet Management) - 6/6 PASSED
+✔ Trip Service Tests (UC04, UC13, UC14, UC15, Geocoding & Distance) - 5/5 PASSED
 ✔ Payment & Rating Service Tests (UC19, UC20, UC22) - 4/4 PASSED
 ✔ Notification Service Tests (UC24, FR37-FR42) - 2/2 PASSED
 ✔ Operations Service Tests (UC28, UC30) - 3/3 PASSED
-✔ Full End-to-End Microservices Integration Workflow (Xanh SM) - 10/10 PASSED
+✔ Full End-to-End Microservices Integration Workflow - 10/10 PASSED
 
-ℹ tests 34
+ℹ tests 35
 ℹ suites 7
-ℹ pass 34
+ℹ pass 35
 ℹ fail 0
 ```
 
@@ -131,4 +126,4 @@ node --test tests/*.test.js
 ## 👨‍💻 Thông tin Sinh viên / Tác giả
 - **MSSV**: `23704171`
 - **Họ và tên**: Nguyễn Hồ Thảo Nguyên
-- **Dự án**: CAB SYSTEM – XANH SM (Kiến trúc Microservices)
+- **Dự án**: CAB SYSTEM (Kiến trúc Microservices)

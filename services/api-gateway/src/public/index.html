@@ -3,180 +3,215 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XANH SM - Hệ Thống Đặt Xe Điện Thông Minh (Microservices)</title>
+  <title>CAB SYSTEM – Hệ Thống Đặt Xe Công Nghệ Thông Minh</title>
+  
+  <!-- CSS Frameworks & Fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
     :root {
-      --xanh-primary: #00A896;
-      --xanh-secondary: #028090;
-      --xanh-accent: #02C39A;
-      --xanh-dark: #071E22;
-      --xanh-card: #0B2528;
-      --xanh-border: #134E4A;
-      --xanh-text: #E6FFFA;
-      --xanh-dim: #99F6E4;
+      --primary: #10B981;       /* Emerald */
+      --primary-hover: #059669;
+      --accent: #3B82F6;        /* Royal Blue */
+      --warning-gold: #F59E0B;  /* Gold */
+      --bg-body: #090D16;
+      --bg-card: #111827;
+      --bg-header: #131D31;
+      --border-dark: #1F2937;
+      --border-subtle: #374151;
+      --text-main: #F9FAFB;
+      --text-dim: #9CA3AF;
     }
+
     body {
-      background: #041416;
-      color: #E6FFFA;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
     }
+
     .navbar {
-      background: #071E22;
-      border-bottom: 2px solid var(--xanh-primary);
+      background: #0D1527;
+      border-bottom: 1px solid var(--border-dark);
     }
-    .brand-logo {
-      font-size: 22px;
+    .brand-title {
+      font-size: 20px;
       font-weight: 800;
       letter-spacing: 0.5px;
-      color: #00E5FF;
+      color: #60A5FA;
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .brand-badge {
-      background: linear-gradient(135deg, #00A896, #02C39A);
-      color: #041416;
-      font-weight: 700;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #FFFFFF;
       font-size: 11px;
+      font-weight: 700;
       padding: 3px 8px;
-      border-radius: 4px;
+      border-radius: 6px;
     }
+
     .status-pill {
       font-size: 11px;
       padding: 3px 9px;
-      border-radius: 12px;
+      border-radius: 20px;
       font-weight: 600;
     }
     .pill-up { background: #064E3B; color: #34D399; border: 1px solid #059669; }
     .pill-down { background: #450A0A; color: #F87171; border: 1px solid #DC2626; }
+
     .card {
-      background: var(--xanh-card);
-      border: 1px solid var(--xanh-border);
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
       border-radius: 12px;
       overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     }
     .card-header {
-      background: #0D3236;
-      border-bottom: 1px solid var(--xanh-border);
-      font-weight: 600;
-      color: #5EEAD4;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border-dark);
+      font-weight: 700;
+      color: #93C5FD;
+      padding: 12px 18px;
     }
+
     .form-control, .form-select {
-      background-color: #082124;
-      border-color: #115E59;
-      color: #F0FDFA;
+      background-color: #1A2438;
+      border-color: #2D3B55;
+      color: #F3F4F6;
+      border-radius: 8px;
     }
     .form-control:focus, .form-select:focus {
-      background-color: #082124;
-      border-color: #00E5FF;
-      color: #F0FDFA;
-      box-shadow: 0 0 0 0.25rem rgba(0, 229, 255, 0.25);
+      background-color: #1A2438;
+      border-color: #3B82F6;
+      color: #FFFFFF;
+      box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
     }
-    .btn-xanh {
-      background: linear-gradient(135deg, #00A896, #02C39A);
-      color: #041416;
+
+    /* Interactive Map Container */
+    #cabMap {
+      height: 380px;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border-dark);
+      z-index: 1;
+    }
+
+    /* Vehicle Class Selector Cards */
+    .vehicle-option {
+      border: 2px solid #1F2937;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #151F32;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .vehicle-option:hover {
+      border-color: #3B82F6;
+      transform: translateY(-2px);
+    }
+    .vehicle-option.selected {
+      border-color: #10B981;
+      background: #062E25;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-book {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #FFFFFF;
       font-weight: 700;
       border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
       transition: all 0.2s;
     }
-    .btn-xanh:hover {
-      background: linear-gradient(135deg, #02C39A, #00E5FF);
-      color: #041416;
+    .btn-book:hover {
+      background: linear-gradient(135deg, #059669, #047857);
       transform: translateY(-1px);
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
     }
-    .badge-xanh-bike { background: #0D9488; }
-    .badge-xanh-taxi { background: #0284C7; }
-    .badge-xanh-luxury { background: #EAB308; color: #111; }
-    .badge-battery {
-      background: #064E3B;
-      color: #34D399;
-      border: 1px solid #059669;
-      font-size: 11px;
-      padding: 2px 6px;
+
+    .distance-indicator {
+      background: #1E293B;
+      border: 1px solid #334155;
       border-radius: 8px;
-    }
-    .co2-pill {
-      background: rgba(2, 195, 154, 0.15);
-      border: 1px solid #02C39A;
-      color: #02C39A;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 8px 14px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
-    .fleet-item {
-      padding: 10px 14px;
-      border-bottom: 1px solid #115E59;
-      transition: background 0.2s;
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(16, 185, 129, 0.6);
+      animation: pulse-green 1.6s infinite;
     }
-    .fleet-item:hover {
-      background: #0D3236;
+    @keyframes pulse-green {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #1A2438;
+      border: 1px solid #2D3B55;
+      border-radius: 0 0 8px 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      border-bottom: 1px solid #243049;
+    }
+    .autocomplete-item:hover {
+      background: #25334E;
+      color: #60A5FA;
+    }
+
     .event-log-box {
-      background: #030F11;
-      border: 1px solid #115E59;
+      background: #090E17;
+      border: 1px solid #1E293B;
       border-radius: 8px;
-      height: 250px;
+      height: 220px;
       overflow-y: auto;
       font-family: "Cascadia Code", Consolas, monospace;
       font-size: 12px;
       padding: 10px;
     }
     .event-entry {
-      padding: 4px 0;
-      border-bottom: 1px solid #082124;
-    }
-    .radar-circle {
-      width: 14px;
-      height: 14px;
-      background: #02C39A;
-      border-radius: 50%;
-      display: inline-block;
-      animation: pulse-green 1.5s infinite;
-    }
-    @keyframes pulse-green {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 195, 154, 0.7); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(2, 195, 154, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 195, 154, 0); }
-    }
-    .vehicle-card {
-      border: 2px solid transparent;
-      border-radius: 10px;
-      padding: 12px;
-      background: #082124;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .vehicle-card.active {
-      border-color: #00E5FF;
-      background: #0E383C;
-    }
-    .vehicle-card:hover {
-      border-color: #02C39A;
+      padding: 3px 0;
+      border-bottom: 1px solid #131B2B;
     }
   </style>
 </head>
 <body>
   <!-- Header -->
-  <nav class="navbar navbar-expand-lg px-4 py-3">
+  <nav class="navbar navbar-expand-lg px-4 py-2">
     <div class="container-fluid">
-      <div class="brand-logo">
-        <i class="fa-solid fa-bolt-lightning text-warning"></i>
-        <span>XANH SM</span>
-        <span class="brand-badge">VINFAST EV FLEET</span>
-        <span class="badge bg-secondary ms-2" style="font-size: 11px;">Microservices 6.0</span>
+      <div class="brand-title">
+        <i class="fa-solid fa-taxi text-warning"></i>
+        <span>CAB SYSTEM</span>
+        <span class="brand-badge">MICROSERVICES ARCHITECTURE</span>
       </div>
       <div class="d-flex align-items-center gap-3">
         <div class="form-check form-switch text-light d-flex align-items-center gap-2">
-          <input class="form-check-input" type="checkbox" id="autoPilotSwitch" checked>
-          <label class="form-check-label small fw-bold text-info" for="autoPilotSwitch">
-            <i class="fa-solid fa-robot me-1"></i>Auto-Pilot (Tự Động Tìm & Chạy)
+          <input class="form-check-input" type="checkbox" id="autoDispatchSwitch" checked>
+          <label class="form-check-label small fw-bold text-info" for="autoDispatchSwitch">
+            <i class="fa-solid fa-bolt me-1"></i>Tự động điều phối tài xế (Auto Dispatch)
           </label>
         </div>
         <a href="/docs" class="btn btn-outline-info btn-sm"><i class="fa-solid fa-book me-1"></i>OpenAPI / Docs</a>
@@ -185,15 +220,15 @@
     </div>
   </nav>
 
-  <!-- Health indicators -->
-  <div class="bg-black bg-opacity-40 border-bottom border-teal border-opacity-25 py-2 px-4" style="border-color: #115E59 !important;">
+  <!-- Service Health Indicators -->
+  <div class="bg-dark bg-opacity-40 border-bottom border-secondary border-opacity-25 py-2 px-4">
     <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <span class="small fw-bold text-uppercase" style="color: #5EEAD4;"><i class="fa-solid fa-network-wired me-1"></i>Microservices Trạng Thái:</span>
+      <span class="small fw-bold text-uppercase text-secondary"><i class="fa-solid fa-network-wired me-1"></i>Trạng thái Microservices:</span>
       <div class="d-flex flex-wrap gap-2" id="healthPills">
         <span class="status-pill pill-up" id="h-gateway">Gateway: 3000</span>
         <span class="status-pill pill-up" id="h-customer">Customer: 3001</span>
         <span class="status-pill pill-up" id="h-driver">Driver (Fleet: 20): 3002</span>
-        <span class="status-pill pill-up" id="h-trip">Trip (AI Dispatch): 3003</span>
+        <span class="status-pill pill-up" id="h-trip">Trip (Dynamic Geocoding): 3003</span>
         <span class="status-pill pill-up" id="h-payment">Payment: 3004</span>
         <span class="status-pill pill-up" id="h-notification">Notification: 3005</span>
         <span class="status-pill pill-up" id="h-operations">Operations: 3006</span>
@@ -203,93 +238,113 @@
 
   <div class="container-fluid p-4">
     <div class="row g-4">
-      <!-- Left Column: Booking & Auto Ride Journey -->
+      <!-- Left Column: Booking & Ride Lifecycle -->
       <div class="col-lg-7">
-        <!-- 1. Đặt Chuyến Xanh SM -->
-        <div class="card mb-4 shadow">
+        <!-- 1. Đặt Xe & Tính Khoảng Cách Tự Động -->
+        <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-location-dot me-2 text-warning"></i>1. Khách Hàng Đặt Xe Điện Xanh SM</span>
-            <span class="badge bg-dark border border-secondary" id="activeCustomerId">👤 Khách hàng #1 (Nguyễn Hồ Thảo Nguyên)</span>
+            <span><i class="fa-solid fa-route me-2 text-primary"></i>1. Đặt Xe & Tính Khoảng Cách Thông Minh</span>
+            <span class="small text-secondary">Khách hàng: <strong>Nguyễn Hồ Thảo Nguyên (#1)</strong></span>
           </div>
           <div class="card-body">
-            <!-- Fast Preset Selectors -->
-            <div class="mb-3">
-              <label class="small text-secondary fw-bold mb-1"><i class="fa-solid fa-bolt me-1 text-warning"></i>Chọn nhanh tuyến đường phổ biến:</label>
-              <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-sm btn-outline-info" onclick="setPresetRoute('Bitexco, Q.1', 'Sân bay Tân Sơn Nhất', 8.2)">Bitexco → Sân bay TSN (8.2 km)</button>
-                <button class="btn btn-sm btn-outline-info" onclick="setPresetRoute('Chợ Bến Thành, Q.1', 'Landmark 81, Bình Thạnh', 5.5)">Bến Thành → Landmark 81 (5.5 km)</button>
-                <button class="btn btn-sm btn-outline-info" onclick="setPresetRoute('KTX Khu B ĐHQG, Thủ Đức', 'Phố đi bộ Nguyễn Huệ, Q.1', 18.0)">KTX ĐHQG → Nguyễn Huệ (18 km)</button>
-                <button class="btn btn-sm btn-outline-info" onclick="setPresetRoute('Crescent Mall, Q.7', 'Vincom Đồng Khởi, Q.1', 7.0)">Crescent Mall → Vincom Q.1 (7 km)</button>
-              </div>
-            </div>
-
+            <!-- Address Inputs with dynamic distance calculation -->
             <div class="row g-3">
-              <div class="col-md-5">
-                <label class="form-label small text-secondary">Điểm đón (Pickup):</label>
-                <input type="text" id="pickupInput" class="form-control" value="Tòa nhà Bitexco, Q.1">
+              <div class="col-md-6 position-relative">
+                <label class="form-label small text-secondary fw-bold">Điểm đón (Pickup):</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark border-secondary text-success"><i class="fa-solid fa-location-dot"></i></span>
+                  <input type="text" id="pickupInput" class="form-control" placeholder="Nhập địa chỉ đón bất kỳ..." value="Tòa nhà Bitexco, Q.1" autocomplete="off" oninput="onAddressInput('pickup')">
+                </div>
+                <div class="autocomplete-list" id="pickupSuggestions"></div>
               </div>
-              <div class="col-md-5">
-                <label class="form-label small text-secondary">Điểm đến (Destination):</label>
-                <input type="text" id="destInput" class="form-control" value="Sân bay Tân Sơn Nhất, Tân Bình">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label small text-secondary">Khoảng cách:</label>
-                <input type="number" id="distanceInput" class="form-control" value="8.2" step="0.5" onchange="updateEstimatedFareUI()">
+
+              <div class="col-md-6 position-relative">
+                <label class="form-label small text-secondary fw-bold">Điểm đến (Destination):</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark border-secondary text-danger"><i class="fa-solid fa-flag-checkered"></i></span>
+                  <input type="text" id="destInput" class="form-control" placeholder="Nhập địa chỉ đến bất kỳ..." value="Sân bay Tân Sơn Nhất, Tân Bình" autocomplete="off" oninput="onAddressInput('dest')">
+                </div>
+                <div class="autocomplete-list" id="destSuggestions"></div>
               </div>
             </div>
 
-            <!-- Vehicle Type Selection -->
+            <!-- Quick presets -->
+            <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+              <span class="small text-secondary">Gợi ý nhanh:</span>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Chợ Bến Thành, Quận 1', 'Landmark 81, Bình Thạnh')">Bến Thành → Landmark 81</button>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Tòa nhà Bitexco, Quận 1', 'Sân bay Tân Sơn Nhất, Tân Bình')">Bitexco → Sân bay TSN</button>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('KTX Khu B ĐHQG, Thủ Đức', 'Phố đi bộ Nguyễn Huệ, Quận 1')">KTX ĐHQG → Nguyễn Huệ</button>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="applyPreset('Crescent Mall, Quận 7', 'Vincom Đồng Khởi, Quận 1')">Crescent Mall → Vincom Q.1</button>
+            </div>
+
+            <!-- Calculated Distance & Duration Indicator -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 p-2 bg-dark bg-opacity-60 rounded border border-secondary border-opacity-50">
+              <div class="distance-indicator">
+                <i class="fa-solid fa-road text-info"></i>
+                <span>Khoảng cách lộ trình: <strong class="text-warning" id="displayDistance">9.2 km</strong></span>
+              </div>
+              <div class="distance-indicator">
+                <i class="fa-regular fa-clock text-info"></i>
+                <span>Thời gian ước tính: <strong class="text-light" id="displayDuration">24 phút</strong></span>
+              </div>
+              <div class="distance-indicator">
+                <i class="fa-solid fa-leaf text-success"></i>
+                <span>Cắt giảm CO2: <strong class="text-success" id="displayCo2">1.29 kg</strong></span>
+              </div>
+            </div>
+
+            <!-- Vehicle Class Options -->
             <div class="mt-3">
-              <label class="form-label small text-secondary">Chọn dịch vụ xe điện VinFast:</label>
+              <label class="form-label small text-secondary fw-bold">Chọn phương tiện di chuyển:</label>
               <div class="row g-2">
                 <div class="col-md-4">
-                  <div class="vehicle-card" id="vcard-1" onclick="selectVehicleType(1)">
-                    <div class="d-flex justify-content-between">
-                      <span class="badge badge-xanh-bike">Xanh SM Bike</span>
-                      <small class="text-success fw-bold">~<span id="priceBike">43.000</span>đ</small>
+                  <div class="vehicle-option" id="opt-bike" onclick="selectVehicle(1)">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="badge bg-info text-dark fw-bold">Cab Bike</span>
+                      <strong class="text-success" id="fareBike">48.000đ</strong>
                     </div>
-                    <div class="fw-bold mt-1 text-light">VinFast Feliz S / Evo200</div>
-                    <small class="text-secondary" style="font-size: 11px;">1 khách • Linh hoạt phố xá</small>
+                    <div class="small fw-bold text-light mt-1">Xe 2 bánh công nghệ</div>
+                    <div class="small text-secondary" style="font-size: 11px;">12.000đ mở cửa + 5.000đ/km</div>
                   </div>
                 </div>
+
                 <div class="col-md-4">
-                  <div class="vehicle-card active" id="vcard-2" onclick="selectVehicleType(2)">
-                    <div class="d-flex justify-content-between">
-                      <span class="badge badge-xanh-taxi">Xanh SM Taxi</span>
-                      <small class="text-success fw-bold">~<span id="priceTaxi">97.500</span>đ</small>
+                  <div class="vehicle-option selected" id="opt-car4" onclick="selectVehicle(2)">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="badge bg-primary fw-bold">Cab Car 4-Chỗ</span>
+                      <strong class="text-success" id="fareCar4">106.400đ</strong>
                     </div>
-                    <div class="fw-bold mt-1 text-light">VinFast VF 5 / VF e34</div>
-                    <small class="text-secondary" style="font-size: 11px;">4 chỗ • Êm ái, máy lạnh mát</small>
+                    <div class="small fw-bold text-light mt-1">Ô tô 4 chỗ tiêu chuẩn</div>
+                    <div class="small text-secondary" style="font-size: 11px;">20.000đ mở cửa + 12.000đ/km</div>
                   </div>
                 </div>
+
                 <div class="col-md-4">
-                  <div class="vehicle-card" id="vcard-3" onclick="selectVehicleType(3)">
-                    <div class="d-flex justify-content-between">
-                      <span class="badge badge-xanh-luxury">Xanh SM Luxury</span>
-                      <small class="text-success fw-bold">~<span id="priceLuxury">141.600</span>đ</small>
+                  <div class="vehicle-option" id="opt-car7" onclick="selectVehicle(3)">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="badge bg-warning text-dark fw-bold">Cab Car 7-Chỗ</span>
+                      <strong class="text-success" id="fareCar7">143.200đ</strong>
                     </div>
-                    <div class="fw-bold mt-1 text-light">VinFast VF 8 / VF 9</div>
-                    <small class="text-secondary" style="font-size: 11px;">SUV 5-7 chỗ • Đẳng cấp VIP</small>
+                    <div class="small fw-bold text-light mt-1">Ô tô 7 chỗ gia đình & VIP</div>
+                    <div class="small text-secondary" style="font-size: 11px;">28.000đ mở cửa + 16.000đ/km</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-3">
-              <div class="co2-pill" id="co2Pill">
-                <i class="fa-solid fa-leaf"></i> Giảm phát thải: <strong>1.31 kg CO2</strong>
-              </div>
-              <button class="btn btn-xanh px-4 py-2" onclick="bookXanhTrip()">
-                <i class="fa-solid fa-paper-plane me-1"></i>Đặt Xe Xanh SM Ngay
+            <!-- Submit Booking Button -->
+            <div class="mt-3 text-end">
+              <button class="btn btn-book w-100" onclick="submitBooking()">
+                <i class="fa-solid fa-taxi me-2"></i>Xác Nhận Đặt Chuyến Ngay
               </button>
             </div>
 
-            <!-- Active Trip Tracker Modal Box -->
-            <div id="activeTripBox" class="mt-4 p-3 rounded border border-info bg-dark d-none">
+            <!-- Active Trip Tracker Modal -->
+            <div id="activeTripBox" class="mt-4 p-3 rounded border border-primary bg-dark bg-opacity-70 d-none">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="radar-circle"></span>
-                  <h6 class="text-info mb-0 fw-bold">Chuyến xe Xanh SM: #<span id="currentTripId">--</span></h6>
+                  <span class="pulse-dot"></span>
+                  <h6 class="text-info mb-0 fw-bold">Chuyến xe: #<span id="currentTripId">--</span></h6>
                 </div>
                 <div>
                   <span class="badge bg-warning text-dark fw-bold px-2 py-1" id="currentTripStatus">Searching</span>
@@ -297,70 +352,67 @@
                 </div>
               </div>
 
-              <!-- Driver matched card -->
+              <!-- Matched Driver Card -->
               <div id="matchedDriverCard" class="p-3 my-2 rounded border border-success bg-success bg-opacity-10 d-none">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <div class="bg-success text-white rounded-circle p-3 text-center" style="width: 50px; height: 50px;">
-                      <i class="fa-solid fa-taxi fa-lg"></i>
-                    </div>
-                  </div>
-                  <div class="col">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
                     <h6 class="mb-1 text-light fw-bold" id="matchedDriverName">Lê Văn Tài</h6>
                     <div class="small text-secondary">
-                      Xe: <span class="text-warning fw-bold" id="matchedDriverModel">VinFast VF 5 Plus</span> | 
-                      Biển số: <strong class="text-light" id="matchedDriverPlate">59A-12345</strong>
+                      Phương tiện: <strong class="text-light" id="matchedDriverVehicle">Toyota Vios 2024</strong> | 
+                      Biển số: <span class="badge bg-secondary" id="matchedDriverPlate">59A-12345</span>
                     </div>
-                    <div class="small mt-1 d-flex gap-2 align-items-center">
-                      <span class="text-warning">★ <span id="matchedDriverRating">4.9</span></span>
-                      <span class="badge-battery"><i class="fa-solid fa-battery-three-quarters me-1"></i>Pin: <span id="matchedDriverBattery">92%</span></span>
-                      <span class="text-info"><i class="fa-solid fa-route me-1"></i>Đang đến: <strong id="matchedDriverEta">3 phút (1.2 km)</strong></span>
+                    <div class="small text-info mt-1">
+                      <i class="fa-solid fa-star text-warning"></i> <span id="matchedDriverRating">4.9</span> • 
+                      Khoảng cách đón: <strong id="matchedDriverEta">3 phút (1.2 km)</strong>
                     </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-success py-2 px-3">Tài xế đã nhận</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Step Progress Tracker Bar -->
-              <div class="progress my-3" style="height: 10px; background-color: #082124;">
-                <div id="tripProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 15%"></div>
+              <!-- Progress bar -->
+              <div class="progress my-3" style="height: 8px; background-color: #1F2937;">
+                <div id="tripProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 20%"></div>
               </div>
 
-              <!-- Manual Action Buttons (if user wants to manually progress without Auto-Pilot) -->
-              <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-50">
-                <span class="small text-secondary" id="autoPilotNotice">Auto-Pilot: Đang điều phối chuyến xe tự động...</span>
+              <!-- Step progression status indicator -->
+              <div class="d-flex justify-content-between align-items-center small text-secondary pt-2 border-top border-secondary border-opacity-25">
+                <span id="workflowNotice">Đang điều phối tài xế gần nhất...</span>
                 <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-secondary" onclick="advanceTripStatus(3)">Đã đến</button>
-                  <button class="btn btn-outline-secondary" onclick="advanceTripStatus(4)">Đã đón</button>
-                  <button class="btn btn-outline-secondary" onclick="advanceTripStatus(5)">Di chuyển</button>
-                  <button class="btn btn-outline-success" onclick="advanceTripStatus(6)">Hoàn thành</button>
+                  <button class="btn btn-outline-secondary" onclick="manualStatus(3)">Đã đến</button>
+                  <button class="btn btn-outline-secondary" onclick="manualStatus(4)">Đã đón</button>
+                  <button class="btn btn-outline-secondary" onclick="manualStatus(5)">Di chuyển</button>
+                  <button class="btn btn-outline-success" onclick="manualStatus(6)">Hoàn thành</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. Thanh Toán & Đánh Giá Xanh SM -->
-        <div class="card shadow">
+        <!-- 2. Thanh Toán & Đánh Giá -->
+        <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-credit-card me-2 text-success"></i>2. Thanh Toán Xanh SM & Đánh Giá Tài Xế</span>
-            <span class="badge bg-dark border border-success text-success">Không tiền mặt • Tiện lợi</span>
+            <span><i class="fa-solid fa-credit-card me-2 text-success"></i>2. Thanh Toán Cước & Đánh Giá Dịch Vụ</span>
+            <span class="small text-secondary">Nghiệp vụ BRL12, BRL14 & BRL16</span>
           </div>
           <div class="card-body">
             <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label small text-secondary">Phương thức thanh toán:</label>
+              <div class="col-md-5">
+                <label class="form-label small text-secondary">Phương thức thanh toán (BRL13):</label>
                 <select id="paymentMethodSelect" class="form-select">
-                  <option value="2" selected>⚡ Ví Xanh SM / Điện Tử</option>
-                  <option value="1">💵 Tiền mặt (Cash)</option>
+                  <option value="2" selected>Thanh toán Điện Tử (Ví Cab / Thẻ / QR)</option>
+                  <option value="1">Tiền Mặt (Thanh toán trực tiếp cho tài xế)</option>
                 </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label small text-secondary">Cước chuyến xe (VNĐ):</label>
-                <input type="number" id="payAmountInput" class="form-control fw-bold text-warning" value="97500" readonly>
+                <input type="number" id="payAmountInput" class="form-control fw-bold text-warning" value="106400" readonly>
               </div>
-              <div class="col-md-4 d-flex align-items-end">
+              <div class="col-md-3 d-flex align-items-end">
                 <button class="btn btn-success w-100 fw-bold" onclick="processPayment()">
-                  <i class="fa-solid fa-wallet me-1"></i>Xác Nhận Thanh Toán
+                  <i class="fa-solid fa-wallet me-1"></i>Thanh Toán
                 </button>
               </div>
             </div>
@@ -369,18 +421,18 @@
 
             <div class="row g-3 align-items-center">
               <div class="col-md-3">
-                <label class="form-label small text-secondary">Đánh giá 1-5 sao:</label>
+                <label class="form-label small text-secondary">Đánh giá tài xế (AC07.5):</label>
                 <select id="ratingScoreSelect" class="form-select">
-                  <option value="5" selected>★★★★★ (5 sao Xuất sắc)</option>
-                  <option value="4">★★★★☆ (4 sao Tốt)</option>
-                  <option value="3">★★★☆☆ (3 sao Bình thường)</option>
-                  <option value="2">★★☆☆☆ (2 sao)</option>
-                  <option value="1">★☆☆☆☆ (1 sao)</option>
+                  <option value="5" selected>★★★★★ (5 sao - Tuyệt vời)</option>
+                  <option value="4">★★★★☆ (4 sao - Tốt)</option>
+                  <option value="3">★★★☆☆ (3 sao - Bình thường)</option>
+                  <option value="2">★★☆☆☆ (2 sao - Chưa tốt)</option>
+                  <option value="1">★☆☆☆☆ (1 sao - Kém)</option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label small text-secondary">Cảm nhận chuyến xe điện:</label>
-                <input type="text" id="ratingCommentInput" class="form-control" value="Xe điện VinFast chạy rất êm, tài xế lịch sự, không mùi xăng xe!">
+                <label class="form-label small text-secondary">Nhận xét chuyến đi:</label>
+                <input type="text" id="ratingCommentInput" class="form-control" value="Tài xế lái xe an toàn, đúng giờ và nhiệt tình.">
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 <button class="btn btn-outline-warning w-100 fw-bold" onclick="submitRating()">
@@ -392,38 +444,38 @@
         </div>
       </div>
 
-      <!-- Right Column: Live VinFast Fleet Radar & Operations CMS -->
+      <!-- Right Column: Interactive OpenStreetMap & Fleet Monitoring -->
       <div class="col-lg-5">
-        <!-- Live Fleet Radar (20 VinFast Drivers) -->
-        <div class="card mb-4 shadow">
+        <!-- Live Interactive Map -->
+        <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-car-battery me-2 text-info"></i>Đội Xe VinFast Xanh SM Trực Tuyến (<span id="fleetCount">20</span> xe)</span>
-            <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-outline-light" onclick="filterFleet(0)">Tất cả</button>
-              <button class="btn btn-sm btn-outline-info" onclick="filterFleet(1)">Bike</button>
-              <button class="btn btn-sm btn-outline-info" onclick="filterFleet(2)">Taxi</button>
-              <button class="btn btn-sm btn-outline-warning" onclick="filterFleet(3)">Luxury</button>
-            </div>
+            <span><i class="fa-solid fa-map-location-dot me-2 text-info"></i>Bản Đồ Trực Tuyến & Tọa Độ GPS</span>
+            <span class="badge bg-secondary" id="driverOnlineCount">20 tài xế online</span>
           </div>
-          <div class="card-body p-0">
-            <div id="fleetContainer" style="max-height: 280px; overflow-y: auto;">
-              <div class="text-center py-3 text-secondary">Đang tải danh sách đội xe VinFast...</div>
+          <div class="card-body p-2">
+            <!-- Map Container -->
+            <div id="cabMap"></div>
+            <div class="d-flex justify-content-between align-items-center mt-2 px-1 small text-secondary">
+              <span><i class="fa-solid fa-circle text-success me-1"></i>Điểm đón</span>
+              <span><i class="fa-solid fa-circle text-danger me-1"></i>Điểm đến</span>
+              <span><i class="fa-solid fa-car text-warning me-1"></i>Tài xế sẵn sàng</span>
+              <button class="btn btn-sm btn-outline-secondary py-0" onclick="centerMapHCMC()">Reset vị trí</button>
             </div>
           </div>
         </div>
 
         <!-- Live Operations CMS (Trips & Transactions) -->
-        <div class="card mb-4 shadow">
+        <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-chart-line me-2 text-primary"></i>Operations CMS (UC28 & UC30)</span>
-            <span class="small text-secondary" id="totalRevenueBadge">Tổng thu: 0 VNĐ</span>
+            <span><i class="fa-solid fa-clipboard-list me-2 text-primary"></i>Operations CMS (UC28 & UC30)</span>
+            <span class="small text-success fw-bold" id="totalRevenueBadge">Tổng thu: 0 VNĐ</span>
           </div>
           <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: 180px;">
+            <div class="table-responsive" style="max-height: 160px;">
               <table class="table table-dark table-hover table-sm mb-0">
                 <thead>
                   <tr class="small text-secondary">
-                    <th>Trip ID</th>
+                    <th>Trip</th>
                     <th>Tài xế</th>
                     <th>Cước</th>
                     <th>Trạng thái</th>
@@ -437,15 +489,15 @@
           </div>
         </div>
 
-        <!-- Live EventBus Stream -->
-        <div class="card shadow">
+        <!-- Live Event Stream -->
+        <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-bolt me-2 text-warning"></i>Microservices Event Stream</span>
-            <button class="btn btn-outline-danger btn-sm" onclick="clearEventLogs()">Clear</button>
+            <span><i class="fa-solid fa-bolt me-2 text-warning"></i>Microservices Event Stream (Pub/Sub)</span>
+            <button class="btn btn-outline-danger btn-sm py-0" onclick="clearEventLogs()">Clear</button>
           </div>
           <div class="card-body p-2">
             <div class="event-log-box" id="eventLogBox">
-              <div class="text-secondary">[Ready] Hệ thống Xanh SM Microservices đã sẵn sàng.</div>
+              <div class="text-secondary">[Ready] Hệ thống Microservices CAB System đã sẵn sàng.</div>
             </div>
           </div>
         </div>
@@ -453,6 +505,8 @@
     </div>
   </div>
 
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

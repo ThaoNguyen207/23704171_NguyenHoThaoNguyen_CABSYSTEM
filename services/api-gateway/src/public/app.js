@@ -1,179 +1,256 @@
+let map;
+let pickupMarker = null;
+let destMarker = null;
+let routeLine = null;
+let driverMarkers = [];
 let currentTrip = null;
-let selectedVehicleType = 2; // Default: Xanh SM Taxi
-let fullFleet = [];
-let autoPilotTimer = null;
+let selectedVehicleType = 2; // Default: Cab Car 4-Chỗ
+let currentDistanceKm = 9.2;
+let debounceTimer = null;
+let autoWorkflowTimer = null;
+let activeMovingDriverMarker = null;
 
-// Preset routes in HCMC
-const presetRoutes = {
-  'Bitexco, Q.1': { lat: 10.7716, lng: 106.7044 },
-  'Sân bay Tân Sơn Nhất, Tân Bình': { lat: 10.8184, lng: 106.6588 },
-  'Chợ Bến Thành, Q.1': { lat: 10.7721, lng: 106.6983 },
-  'Landmark 81, Bình Thạnh': { lat: 10.7951, lng: 106.7218 },
-  'KTX Khu B ĐHQG, Thủ Đức': { lat: 10.8804, lng: 106.7820 },
-  'Phố đi bộ Nguyễn Huệ, Q.1': { lat: 10.7743, lng: 106.7037 },
-  'Crescent Mall, Q.7': { lat: 10.7294, lng: 106.7190 },
-  'Vincom Đồng Khởi, Q.1': { lat: 10.7780, lng: 106.7020 }
-};
+const SUGGESTIONS = [
+  'Tòa nhà Bitexco, Quận 1',
+  'Chợ Bến Thành, Quận 1',
+  'Landmark 81, Bình Thạnh',
+  'Sân bay Tân Sơn Nhất, Tân Bình',
+  'Phố đi bộ Nguyễn Huệ, Quận 1',
+  'Hồ Con Rùa, Quận 3',
+  'Nhà thờ Đức Bà, Quận 1',
+  'Crescent Mall, Quận 7',
+  'KTX Khu B ĐHQG, Thủ Đức',
+  'Bệnh viện Chợ Rẫy, Quận 5',
+  'Khu du lịch Suối Tiên, Thủ Đức',
+  'Công viên Đầm Sen, Quận 11',
+  'Aeon Mall Tân Phú, Tân Phú',
+  'Aeon Mall Bình Tân, Bình Tân',
+  'Khu Thảo Điền, TP. Thủ Đức',
+  'Vạn Hạnh Mall, Quận 10',
+  'Ga Sài Gòn, Quận 3',
+  'Phan Xích Long, Phú Nhuận',
+  'Bến xe Miền Đông, Bình Thạnh',
+  'Bến xe Miền Tây, Bình Tân'
+];
 
-function setPresetRoute(pickup, dest, distance) {
-  document.getElementById('pickupInput').value = pickup;
-  document.getElementById('destInput').value = dest;
-  document.getElementById('distanceInput').value = distance;
-  updateEstimatedFareUI();
+// 1. Initialize Map
+function initMap() {
+  if (typeof L === 'undefined') return;
+
+  // Center on Ho Chi Minh City
+  map = L.map('cabMap', {
+    zoomControl: true,
+    attributionControl: false
+  }).setView([10.7769, 106.7009], 12);
+
+  // CartoDB Dark Matter Tiles (Modern Dark Theme)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // Load online drivers
+  loadDriversOnMap();
+
+  // Initial Route calculation
+  calculateDynamicRoute();
 }
 
-function selectVehicleType(typeId) {
-  selectedVehicleType = typeId;
-  document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('active'));
-  const card = document.getElementById(`vcard-${typeId}`);
-  if (card) card.classList.add('active');
-  updateEstimatedFareUI();
+function centerMapHCMC() {
+  if (map) map.setView([10.7769, 106.7009], 12);
 }
 
-function updateEstimatedFareUI() {
-  const dist = parseFloat(document.getElementById('distanceInput').value) || 5.0;
-
-  // Type 1: Bike (12k base 2km, 5k/km)
-  const bikeFare = Math.round(12000 + Math.max(0, dist - 2) * 5000);
-  // Type 2: Taxi (20k base 2km, 12.5k/km)
-  const taxiFare = Math.round(20000 + Math.max(0, dist - 2) * 12500);
-  // Type 3: Luxury (30k base 2km, 18k/km)
-  const luxFare = Math.round(30000 + Math.max(0, dist - 2) * 18000);
-
-  document.getElementById('priceBike').innerText = bikeFare.toLocaleString();
-  document.getElementById('priceTaxi').innerText = taxiFare.toLocaleString();
-  document.getElementById('priceLuxury').innerText = luxFare.toLocaleString();
-
-  let activeFare = taxiFare;
-  if (selectedVehicleType === 1) activeFare = bikeFare;
-  if (selectedVehicleType === 3) activeFare = luxFare;
-
-  document.getElementById('payAmountInput').value = activeFare;
-
-  // CO2 Saved
-  const co2 = (dist * 0.16).toFixed(2);
-  document.getElementById('co2Pill').innerHTML = `<i class="fa-solid fa-leaf"></i> Giảm phát thải: <strong>${co2} kg CO2</strong>`;
-}
-
-function logEvent(title, detail, type = 'info') {
-  const box = document.getElementById('eventLogBox');
-  const time = new Date().toLocaleTimeString();
-  const entry = document.createElement('div');
-  entry.className = 'event-entry';
-
-  let colorClass = 'text-info';
-  if (type === 'success') colorClass = 'text-success';
-  if (type === 'warning') colorClass = 'text-warning';
-  if (type === 'error') colorClass = 'text-danger';
-
-  entry.innerHTML = `<span class="text-secondary">[${time}]</span> <strong class="${colorClass}">${title}</strong> ${detail ? `<span class="text-light">${detail}</span>` : ''}`;
-  box.prepend(entry);
-}
-
-function clearEventLogs() {
-  document.getElementById('eventLogBox').innerHTML = '';
-}
-
-// Check Microservices Health
-async function checkHealth() {
-  const services = [
-    { id: 'h-gateway', url: '/health' },
-    { id: 'h-customer', url: 'http://localhost:3001/health' },
-    { id: 'h-driver', url: 'http://localhost:3002/health' },
-    { id: 'h-trip', url: 'http://localhost:3003/health' },
-    { id: 'h-payment', url: 'http://localhost:3004/health' },
-    { id: 'h-notification', url: 'http://localhost:3005/health' },
-    { id: 'h-operations', url: 'http://localhost:3006/health' },
-  ];
-
-  for (const s of services) {
-    const pill = document.getElementById(s.id);
-    if (!pill) continue;
-    try {
-      const resp = await fetch(s.url);
-      if (resp.ok) {
-        pill.className = 'status-pill pill-up';
-      } else {
-        pill.className = 'status-pill pill-down';
-      }
-    } catch {
-      pill.className = 'status-pill pill-up';
-    }
-  }
-}
-
-// Load Full VinFast Fleet (20+ drivers)
-async function loadFleet() {
+// 2. Fetch and Render Fleet on Map
+async function loadDriversOnMap() {
   try {
     const res = await fetch('/api/drivers/fleet');
     if (res.ok) {
-      fullFleet = await res.json();
-      renderFleet(fullFleet);
-      document.getElementById('fleetCount').innerText = fullFleet.length;
+      const fleet = await res.json();
+      document.getElementById('driverOnlineCount').innerText = `${fleet.length} tài xế online`;
+
+      // Clear old driver markers
+      driverMarkers.forEach(m => map.removeLayer(m));
+      driverMarkers = [];
+
+      fleet.forEach(d => {
+        if (!d.latitude || !d.longitude) return;
+        const iconHtml = d.vehicleTypeId === 1
+          ? '<div style="font-size: 16px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🛵</div>'
+          : '<div style="font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🚗</div>';
+
+        const customIcon = L.divIcon({
+          html: iconHtml,
+          className: 'driver-map-icon',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        const marker = L.marker([d.latitude, d.longitude], { icon: customIcon }).addTo(map);
+        marker.bindPopup(`
+          <strong>${d.fullName}</strong><br>
+          <small>${d.model || d.brand}</small><br>
+          <span style="color: #2563eb;">${d.licensePlate}</span> • ★ ${d.rating}
+        `);
+        marker.driverId = d.driverId;
+        driverMarkers.push(marker);
+      });
     }
   } catch (err) {
-    console.error('Error loading fleet:', err);
+    console.error('Error loading drivers on map:', err);
   }
 }
 
-function filterFleet(vtype) {
-  if (vtype === 0) {
-    renderFleet(fullFleet);
-  } else {
-    const filtered = fullFleet.filter(d => d.vehicleTypeId === vtype);
-    renderFleet(filtered);
-  }
-}
-
-function renderFleet(drivers) {
-  const container = document.getElementById('fleetContainer');
-  if (!drivers || drivers.length === 0) {
-    container.innerHTML = '<div class="text-center py-3 text-secondary">Không có tài xế nào</div>';
-    return;
-  }
-
-  container.innerHTML = drivers.map(d => {
-    let badgeClass = 'badge-xanh-taxi';
-    if (d.vehicleTypeId === 1) badgeClass = 'badge-xanh-bike';
-    if (d.vehicleTypeId === 3) badgeClass = 'badge-xanh-luxury';
-
-    const isReady = d.availabilityStatus === 'READY';
-
-    return `
-      <div class="fleet-item d-flex justify-content-between align-items-center">
-        <div>
-          <div class="fw-bold text-light d-flex align-items-center gap-2">
-            <span>${d.fullName}</span>
-            <span class="badge ${badgeClass}" style="font-size: 10px;">${d.model || 'VinFast'}</span>
-            <span class="badge-battery"><i class="fa-solid fa-battery-three-quarters me-1"></i>${d.batteryLevel || 90}%</span>
-          </div>
-          <div class="small text-secondary mt-1">
-            <span class="text-info">${d.licensePlate}</span> • ${d.currentLocationName || 'Hồ Chí Minh'} • <span class="text-warning">★ ${d.rating}</span>
-          </div>
-        </div>
-        <div>
-          <span class="badge ${isReady ? 'bg-success' : 'bg-warning text-dark'}" style="font-size: 11px;">
-            ${isReady ? 'SẴN SÀNG' : 'ĐANG CHẠY'}
-          </span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// Book Trip with Smart AI Dispatch
-async function bookXanhTrip() {
+// 3. Dynamic Address Geocoding & Distance Calculation
+async function calculateDynamicRoute() {
   const pickup = document.getElementById('pickupInput').value.trim();
   const dest = document.getElementById('destInput').value.trim();
-  const dist = parseFloat(document.getElementById('distanceInput').value) || 5.0;
-  const isAutoPilot = document.getElementById('autoPilotSwitch').checked;
 
-  if (!pickup || !dest) {
-    alert('Vui lòng nhập điểm đón và điểm đến!');
+  if (!pickup || !dest) return;
+
+  try {
+    const res = await fetch('/api/trips/estimate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pickupLocation: pickup,
+        destination: dest,
+        vehicleTypeId: selectedVehicleType
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      currentDistanceKm = data.distanceKm;
+
+      // Update UI indicators
+      document.getElementById('displayDistance').innerText = `${data.distanceKm} km`;
+      document.getElementById('displayDuration').innerText = `${data.estimatedDurationMins} phút`;
+      document.getElementById('displayCo2').innerText = `${data.co2SavedKg} kg`;
+
+      // Update pricing for all vehicle classes
+      const f1 = data.fares[1].totalFare;
+      const f2 = data.fares[2].totalFare;
+      const f3 = data.fares[3].totalFare;
+
+      document.getElementById('fareBike').innerText = `${f1.toLocaleString()}đ`;
+      document.getElementById('fareCar4').innerText = `${f2.toLocaleString()}đ`;
+      document.getElementById('fareCar7').innerText = `${f3.toLocaleString()}đ`;
+
+      let activeAmount = f2;
+      if (selectedVehicleType === 1) activeAmount = f1;
+      if (selectedVehicleType === 3) activeAmount = f3;
+      document.getElementById('payAmountInput').value = activeAmount;
+
+      // Update Leaflet Map Markers & Polyline
+      updateMapRoute(data.pickup, data.destination);
+    }
+  } catch (err) {
+    console.error('Estimate error:', err);
+  }
+}
+
+function updateMapRoute(pickupCoord, destCoord) {
+  if (!map || !pickupCoord || !destCoord) return;
+
+  // Pickup Marker (Green Pin)
+  if (pickupMarker) map.removeLayer(pickupMarker);
+  const greenIcon = L.divIcon({
+    html: '<div style="background:#10B981; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px rgba(16,185,129,0.8);"></div>',
+    className: 'pickup-icon',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  pickupMarker = L.marker([pickupCoord.lat, pickupCoord.lng], { icon: greenIcon }).addTo(map);
+  pickupMarker.bindPopup(`<strong>Điểm đón:</strong><br>${pickupCoord.name}`);
+
+  // Destination Marker (Red Pin)
+  if (destMarker) map.removeLayer(destMarker);
+  const redIcon = L.divIcon({
+    html: '<div style="background:#EF4444; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px rgba(239,68,68,0.8);"></div>',
+    className: 'dest-icon',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  destMarker = L.marker([destCoord.lat, destCoord.lng], { icon: redIcon }).addTo(map);
+  destMarker.bindPopup(`<strong>Điểm đến:</strong><br>${destCoord.name}`);
+
+  // Route Polyline
+  if (routeLine) map.removeLayer(routeLine);
+  routeLine = L.polyline([
+    [pickupCoord.lat, pickupCoord.lng],
+    [destCoord.lat, destCoord.lng]
+  ], {
+    color: '#3B82F6',
+    weight: 4,
+    opacity: 0.8,
+    dashArray: '8, 8'
+  }).addTo(map);
+
+  // Fit view to include both points
+  const group = new L.featureGroup([pickupMarker, destMarker]);
+  map.fitBounds(group.getBounds().pad(0.2));
+}
+
+// 4. Autocomplete & Input Handling
+function onAddressInput(type) {
+  const inputEl = document.getElementById(`${type}Input`);
+  const listEl = document.getElementById(`${type}Suggestions`);
+  const query = inputEl.value.toLowerCase().trim();
+
+  if (!query) {
+    listEl.style.display = 'none';
     return;
   }
 
-  const pickupCoords = presetRoutes[pickup] || { lat: 10.7716, lng: 106.7044 };
+  const matches = SUGGESTIONS.filter(s => s.toLowerCase().includes(query)).slice(0, 5);
+
+  if (matches.length > 0) {
+    listEl.innerHTML = matches.map(m => `
+      <div class="autocomplete-item" onclick="selectSuggestion('${type}', '${m}')">
+        <i class="fa-solid fa-location-dot me-2 text-secondary"></i>${m}
+      </div>
+    `).join('');
+    listEl.style.display = 'block';
+  } else {
+    listEl.style.display = 'none';
+  }
+
+  // Debounced distance recalculation when typing ANY address
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    calculateDynamicRoute();
+  }, 400);
+}
+
+function selectSuggestion(type, value) {
+  document.getElementById(`${type}Input`).value = value;
+  document.getElementById(`${type}Suggestions`).style.display = 'none';
+  calculateDynamicRoute();
+}
+
+function applyPreset(pickup, dest) {
+  document.getElementById('pickupInput').value = pickup;
+  document.getElementById('destInput').value = dest;
+  calculateDynamicRoute();
+}
+
+function selectVehicle(typeId) {
+  selectedVehicleType = typeId;
+  document.querySelectorAll('.vehicle-option').forEach(el => el.classList.remove('selected'));
+  const targetId = typeId === 1 ? 'opt-bike' : typeId === 2 ? 'opt-car4' : 'opt-car7';
+  document.getElementById(targetId).classList.add('selected');
+  calculateDynamicRoute();
+}
+
+// 5. Submit Booking
+async function submitBooking() {
+  const pickup = document.getElementById('pickupInput').value.trim();
+  const dest = document.getElementById('destInput').value.trim();
+  const isAuto = document.getElementById('autoDispatchSwitch').checked;
+
+  if (!pickup || !dest) {
+    alert('Vui lòng nhập đầy đủ điểm đón và điểm đến!');
+    return;
+  }
 
   try {
     const res = await fetch('/api/trips', {
@@ -184,10 +261,8 @@ async function bookXanhTrip() {
         pickupLocation: pickup,
         destination: dest,
         vehicleTypeId: selectedVehicleType,
-        distanceKm: dist,
-        pickupLat: pickupCoords.lat,
-        pickupLng: pickupCoords.lng,
-        autoDispatch: false // we handle smooth animation in UI
+        distanceKm: currentDistanceKm,
+        autoDispatch: false // UI coordinates smooth animation
       })
     });
 
@@ -195,34 +270,31 @@ async function bookXanhTrip() {
     if (res.ok) {
       currentTrip = data;
 
-      // Show Active Trip UI
-      const tripBox = document.getElementById('activeTripBox');
-      tripBox.classList.remove('d-none');
+      // Show Active Trip Box
+      document.getElementById('activeTripBox').classList.remove('d-none');
       document.getElementById('currentTripId').innerText = data.tripId;
-      document.getElementById('currentTripStatus').innerText = 'Searching (Đang tìm xe)';
+      document.getElementById('currentTripStatus').innerText = 'Searching (Đang tìm tài xế)';
       document.getElementById('currentTripStatus').className = 'badge bg-warning text-dark fw-bold px-2 py-1';
-      document.getElementById('tripProgressBar').style.width = '15%';
+      document.getElementById('tripProgressBar').style.width = '20%';
 
-      logEvent('TRIP_CREATED', `Khách đặt chuyến #${data.tripId} (${pickup} → ${dest}) - Cước: ${Number(data.estimatedFare).toLocaleString()} VNĐ`, 'warning');
+      logEvent('TRIP_CREATED', `Tạo chuyến #${data.tripId} (${pickup} → ${dest}) - Khoảng cách: ${data.distanceKm} km - Cước: ${Number(data.estimatedFare).toLocaleString()}đ`, 'warning');
 
-      const candidate = data.candidateDriver;
-      if (candidate) {
-        // Matched driver card
+      const driver = data.candidateDriver;
+      if (driver) {
         document.getElementById('matchedDriverCard').classList.remove('d-none');
-        document.getElementById('matchedDriverName').innerText = candidate.fullName;
-        document.getElementById('matchedDriverModel').innerText = candidate.model || 'VinFast EV';
-        document.getElementById('matchedDriverPlate').innerText = candidate.licensePlate;
-        document.getElementById('matchedDriverRating').innerText = candidate.rating;
-        document.getElementById('matchedDriverBattery').innerText = (candidate.batteryLevel || 90) + '%';
-        document.getElementById('matchedDriverEta').innerText = candidate.etaText || '2 phút (0.8 km)';
+        document.getElementById('matchedDriverName').innerText = driver.fullName;
+        document.getElementById('matchedDriverVehicle').innerText = driver.model || driver.brand;
+        document.getElementById('matchedDriverPlate').innerText = driver.licensePlate;
+        document.getElementById('matchedDriverRating').innerText = driver.rating;
+        document.getElementById('matchedDriverEta').innerText = driver.etaText || '2 phút (0.9 km)';
       }
 
-      loadFleet();
+      loadDriversOnMap();
       loadAdminData();
 
-      // If Auto-Pilot is enabled: run automated smooth transition simulation!
-      if (isAutoPilot && candidate) {
-        runAutoPilotWorkflow(data.tripId, candidate.driverId);
+      // If Auto Dispatch is enabled: run automated lifecycle smoothly
+      if (isAuto && driver) {
+        runAutoDispatchFlow(data.tripId, driver.driverId);
       }
     } else {
       alert(data.message || 'Lỗi khi đặt chuyến');
@@ -233,18 +305,18 @@ async function bookXanhTrip() {
   }
 }
 
-// Auto-Pilot Workflow Simulation (Real Xanh SM Automation)
-function runAutoPilotWorkflow(tripId, driverId) {
-  const notice = document.getElementById('autoPilotNotice');
+// 6. Auto Dispatch Flow
+function runAutoDispatchFlow(tripId, driverId) {
+  const notice = document.getElementById('workflowNotice');
   const bar = document.getElementById('tripProgressBar');
   const statusBadge = document.getElementById('currentTripStatus');
 
-  notice.innerText = '⚡ Auto-Pilot: Tài xế Xanh SM đang phản hồi nhận chuyến...';
+  notice.innerText = '⚡ Auto Dispatch: Hệ thống đang điều phối tài xế gần nhất...';
 
-  if (autoPilotTimer) clearTimeout(autoPilotTimer);
+  if (autoWorkflowTimer) clearTimeout(autoWorkflowTimer);
 
-  // Step 1: Driver Accepts (1.2s)
-  autoPilotTimer = setTimeout(async () => {
+  // 1. Driver Accepts (1.2s)
+  autoWorkflowTimer = setTimeout(async () => {
     try {
       const resp = await fetch(`/api/trips/${tripId}/driver-response`, {
         method: 'POST',
@@ -252,56 +324,56 @@ function runAutoPilotWorkflow(tripId, driverId) {
         body: JSON.stringify({ driverId, action: 'ACCEPT' })
       });
       if (resp.ok) {
-        logEvent('DRIVER_ACCEPTED', `Tài xế đã NHẬN chuyến #${tripId}`, 'success');
+        logEvent('DRIVER_ACCEPTED', `Tài xế đã nhận chuyến #${tripId}`, 'success');
         statusBadge.innerText = 'DriverAccepted';
         statusBadge.className = 'badge bg-primary px-2 py-1';
-        bar.style.width = '35%';
-        notice.innerText = '⚡ Auto-Pilot: Tài xế đang di chuyển tới điểm đón...';
-        loadFleet();
+        bar.style.width = '40%';
+        notice.innerText = 'Tài xế đã nhận chuyến, đang di chuyển đến điểm đón...';
+        loadDriversOnMap();
         loadAdminData();
       }
     } catch {}
 
-    // Step 2: Driver Arrived (3.0s)
-    autoPilotTimer = setTimeout(async () => {
-      await advanceTripStatus(3);
-      bar.style.width = '55%';
-      notice.innerText = '⚡ Auto-Pilot: Tài xế đã tới điểm đón. Đang đón khách...';
+    // 2. Driver Arrived (3.5s)
+    autoWorkflowTimer = setTimeout(async () => {
+      await manualStatus(3);
+      bar.style.width = '60%';
+      notice.innerText = 'Tài xế đã đến điểm đón. Chờ khách lên xe...';
 
-      // Step 3: Passenger Picked Up (5.0s)
-      autoPilotTimer = setTimeout(async () => {
-        await advanceTripStatus(4);
+      // 3. Passenger Picked Up (5.5s)
+      autoWorkflowTimer = setTimeout(async () => {
+        await manualStatus(4);
         bar.style.width = '75%';
-        notice.innerText = '⚡ Auto-Pilot: Khách đã lên xe. Bắt đầu hành trình di chuyển...';
+        notice.innerText = 'Khách đã lên xe. Chuyến xe bắt đầu khởi hành...';
 
-        // Step 4: In Progress (7.0s)
-        autoPilotTimer = setTimeout(async () => {
-          await advanceTripStatus(5);
+        // 4. In Progress (7.5s)
+        autoWorkflowTimer = setTimeout(async () => {
+          await manualStatus(5);
           bar.style.width = '90%';
-          notice.innerText = '⚡ Auto-Pilot: Đang trên đường tới điểm đến...';
+          notice.innerText = 'Đang di chuyển theo lộ trình đến điểm đến...';
 
-          // Step 5: Completed (9.5s)
-          autoPilotTimer = setTimeout(async () => {
-            await advanceTripStatus(6);
+          // 5. Completed (10.0s)
+          autoWorkflowTimer = setTimeout(async () => {
+            await manualStatus(6);
             bar.style.width = '100%';
             bar.className = 'progress-bar bg-success';
-            notice.innerText = '✔ Auto-Pilot: Chuyến xe hoàn thành! Vui lòng xác nhận thanh toán.';
+            notice.innerText = '✔ Chuyến xe đã hoàn thành! Vui lòng xác nhận thanh toán.';
           }, 2500);
         }, 2000);
       }, 2000);
-    }, 2000);
+    }, 2200);
   }, 1200);
 }
 
-// Advance Status
-async function advanceTripStatus(statusId) {
+// 7. Manual Status Progression
+async function manualStatus(statusId) {
   if (!currentTrip) return;
 
   const names = {
-    3: 'DriverArrived (Đã đến)',
-    4: 'PassengerPickedUp (Đã đón khách)',
-    5: 'InProgress (Đang di chuyển)',
-    6: 'Completed (Hoàn thành)'
+    3: 'DriverArrived',
+    4: 'PassengerPickedUp',
+    5: 'InProgress',
+    6: 'Completed'
   };
 
   try {
@@ -312,8 +384,11 @@ async function advanceTripStatus(statusId) {
     });
 
     if (res.ok) {
-      logEvent('TRIP_STATUS_UPDATED', `Chuyển trạng thái #${currentTrip.tripId} → ${names[statusId]}`, 'info');
+      logEvent('TRIP_STATUS_UPDATED', `Cập nhật trạng thái chuyến #${currentTrip.tripId} → ${names[statusId]}`, 'info');
       document.getElementById('currentTripStatus').innerText = names[statusId];
+      if (statusId === 6) {
+        document.getElementById('currentTripStatus').className = 'badge bg-success px-2 py-1';
+      }
       loadAdminData();
     }
   } catch (err) {
@@ -321,10 +396,10 @@ async function advanceTripStatus(statusId) {
   }
 }
 
-// Cancel Trip
+// 8. Cancel Trip
 async function cancelTrip() {
   if (!currentTrip) return;
-  if (!confirm('Bạn có chắc muốn hủy chuyến này?')) return;
+  if (!confirm('Bạn có chắc muốn hủy chuyến đi này?')) return;
 
   try {
     const res = await fetch(`/api/trips/${currentTrip.tripId}/cancel`, {
@@ -332,14 +407,13 @@ async function cancelTrip() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cancelledBy: 'CUSTOMER', reason: 'Thay đổi kế hoạch' })
     });
+
     if (res.ok) {
-      if (autoPilotTimer) clearTimeout(autoPilotTimer);
+      if (autoWorkflowTimer) clearTimeout(autoWorkflowTimer);
       logEvent('TRIP_CANCELLED', `Chuyến #${currentTrip.tripId} đã bị hủy`, 'error');
-      document.getElementById('currentTripStatus').innerText = 'Cancelled (Đã hủy)';
+      document.getElementById('currentTripStatus').innerText = 'Cancelled';
       document.getElementById('currentTripStatus').className = 'badge bg-danger px-2 py-1';
-      document.getElementById('tripProgressBar').style.width = '100%';
-      document.getElementById('tripProgressBar').className = 'progress-bar bg-danger';
-      loadFleet();
+      loadDriversOnMap();
       loadAdminData();
     }
   } catch (err) {
@@ -347,7 +421,7 @@ async function cancelTrip() {
   }
 }
 
-// Process Payment
+// 9. Payment Processing (BRL12 & BRL16)
 async function processPayment() {
   const tripId = currentTrip ? currentTrip.tripId : 5001;
   const methodId = document.getElementById('paymentMethodSelect').value;
@@ -365,9 +439,9 @@ async function processPayment() {
 
     const data = await res.json();
     if (res.ok) {
-      logEvent('PAYMENT_COMPLETED', `Thanh toán thành công ${Number(amount).toLocaleString()} VNĐ qua mã GD ${data.transactionCode}`, 'success');
-      alert(`🎉 Thanh toán Xanh SM thành công!\nMã giao dịch: ${data.transactionCode}\nSố tiền: ${Number(amount).toLocaleString()} VNĐ`);
-      loadFleet();
+      logEvent('PAYMENT_COMPLETED', `Thanh toán thành công ${Number(amount).toLocaleString()}đ - Mã GD: ${data.transactionCode}`, 'success');
+      alert(`🎉 Thanh toán cước thành công!\n• Mã giao dịch: ${data.transactionCode}\n• Số tiền: ${Number(amount).toLocaleString()} VNĐ\n• Trạng thái: Thành công`);
+      loadDriversOnMap();
       loadAdminData();
     } else {
       alert(data.message || 'Lỗi thanh toán');
@@ -378,7 +452,7 @@ async function processPayment() {
   }
 }
 
-// Submit Rating
+// 10. Rating Submission (BRL14 & AC07.5)
 async function submitRating() {
   const tripId = currentTrip ? currentTrip.tripId : 5001;
   const score = document.getElementById('ratingScoreSelect').value;
@@ -390,24 +464,24 @@ async function submitRating() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         score: Number(score),
-        comment: comment || 'Dịch vụ xe điện rất tốt'
+        comment: comment || 'Dịch vụ tốt'
       })
     });
 
     const data = await res.json();
     if (res.ok) {
-      logEvent('RATING_SUBMITTED', `Đã đánh giá chuyến #${tripId}: ${score} sao - "${comment}"`, 'success');
-      alert(' cảm ơn bạn đã đồng hành và đánh giá dịch vụ xe điện Xanh SM!');
-      loadFleet();
+      logEvent('RATING_SUBMITTED', `Gửi đánh giá ${score} sao cho chuyến #${tripId}: "${comment}"`, 'success');
+      alert(' cảm ơn bạn đã gửi đánh giá chuyến đi!');
+      loadDriversOnMap();
     } else {
-      alert(data.message || 'Lỗi khi gửi đánh giá');
+      alert(data.message || 'Lỗi gửi đánh giá');
     }
   } catch (err) {
     console.error(err);
   }
 }
 
-// Load Admin CMS
+// 11. Load Admin CMS
 async function loadAdminData() {
   try {
     const tRes = await fetch('/api/admin/trips');
@@ -441,12 +515,73 @@ async function loadAdminData() {
   } catch (err) {}
 }
 
-// On Page Load
+// 12. Event Log Helper
+function logEvent(title, detail, type = 'info') {
+  const box = document.getElementById('eventLogBox');
+  if (!box) return;
+  const time = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = 'event-entry';
+
+  let colorClass = 'text-info';
+  if (type === 'success') colorClass = 'text-success';
+  if (type === 'warning') colorClass = 'text-warning';
+  if (type === 'error') colorClass = 'text-danger';
+
+  entry.innerHTML = `<span class="text-secondary">[${time}]</span> <strong class="${colorClass}">${title}</strong> ${detail ? `<span class="text-light">${detail}</span>` : ''}`;
+  box.prepend(entry);
+}
+
+function clearEventLogs() {
+  const box = document.getElementById('eventLogBox');
+  if (box) box.innerHTML = '';
+}
+
+// 13. Health Check
+async function checkHealth() {
+  const services = [
+    { id: 'h-gateway', url: '/health' },
+    { id: 'h-customer', url: 'http://localhost:3001/health' },
+    { id: 'h-driver', url: 'http://localhost:3002/health' },
+    { id: 'h-trip', url: 'http://localhost:3003/health' },
+    { id: 'h-payment', url: 'http://localhost:3004/health' },
+    { id: 'h-notification', url: 'http://localhost:3005/health' },
+    { id: 'h-operations', url: 'http://localhost:3006/health' },
+  ];
+
+  for (const s of services) {
+    const pill = document.getElementById(s.id);
+    if (!pill) continue;
+    try {
+      const resp = await fetch(s.url);
+      if (resp.ok) {
+        pill.className = 'status-pill pill-up';
+      } else {
+        pill.className = 'status-pill pill-down';
+      }
+    } catch {
+      pill.className = 'status-pill pill-up';
+    }
+  }
+}
+
+// Initialize on page load
 window.addEventListener('DOMContentLoaded', () => {
+  initMap();
   checkHealth();
-  updateEstimatedFareUI();
-  loadFleet();
   loadAdminData();
   setInterval(loadAdminData, 6000);
   setInterval(checkHealth, 10000);
+
+  // Close autocomplete on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#pickupInput') && !e.target.closest('#pickupSuggestions')) {
+      const p = document.getElementById('pickupSuggestions');
+      if (p) p.style.display = 'none';
+    }
+    if (!e.target.closest('#destInput') && !e.target.closest('#destSuggestions')) {
+      const d = document.getElementById('destSuggestions');
+      if (d) d.style.display = 'none';
+    }
+  });
 });

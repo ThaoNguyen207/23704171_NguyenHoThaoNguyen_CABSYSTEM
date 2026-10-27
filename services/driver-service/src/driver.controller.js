@@ -83,7 +83,7 @@ class DriverController {
 
     const result = this.db.run(
       'INSERT INTO vehicles (driverId, vehicleTypeId, licensePlate, brand, model) VALUES (?, ?, ?, ?, ?)',
-      [driverId, vehicleTypeId, licensePlate, brand || 'VinFast', model || 'VinFast VF 5 Plus']
+      [driverId, vehicleTypeId, licensePlate, brand || 'Toyota', model || 'Toyota Vios']
     );
 
     return res.status(201).json({
@@ -122,7 +122,7 @@ class DriverController {
 
     this.db.run(
       'INSERT INTO vehicles (driverId, vehicleTypeId, licensePlate, brand, model) VALUES (?, ?, ?, ?, ?)',
-      [driverId, vehicleTypeId || 2, licensePlate, brand || 'VinFast', model || 'VinFast VF 5 Plus']
+      [driverId, vehicleTypeId || 2, licensePlate, brand || 'Toyota', model || 'Toyota Vios']
     );
 
     return res.status(201).json({
@@ -172,7 +172,7 @@ class DriverController {
 
     let sql = `
       SELECT DISTINCT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
-             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             d.currentLocationName, d.latitude, d.longitude,
              v.licensePlate, v.brand, v.model, v.vehicleTypeId
       FROM drivers d
       JOIN vehicles v ON d.driverId = v.driverId
@@ -200,7 +200,7 @@ class DriverController {
 
     let sql = `
       SELECT DISTINCT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
-             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             d.currentLocationName, d.latitude, d.longitude,
              v.licensePlate, v.brand, v.model, v.vehicleTypeId, vt.typeName as vehicleType
       FROM drivers d
       JOIN vehicles v ON d.driverId = v.driverId
@@ -237,7 +237,7 @@ class DriverController {
   getFleet = (req, res) => {
     const fleet = this.db.query(`
       SELECT d.driverId, d.fullName, d.phone, d.rating, d.totalRatings, d.availabilityStatus,
-             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             d.currentLocationName, d.latitude, d.longitude,
              v.licensePlate, v.brand, v.model, v.vehicleTypeId, vt.typeName as vehicleType
       FROM drivers d
       LEFT JOIN vehicles v ON d.driverId = v.driverId
@@ -256,7 +256,7 @@ class DriverController {
   getDriver = (req, res) => {
     const driverId = Number(req.params.driverId);
     const driver = this.db.get(
-      'SELECT driverId, fullName, phone, email, rating, totalRatings, availabilityStatus, batteryLevel, currentLocationName, latitude, longitude, status, createdAt FROM drivers WHERE driverId = ?',
+      'SELECT driverId, fullName, phone, email, rating, totalRatings, availabilityStatus, currentLocationName, latitude, longitude, status, createdAt FROM drivers WHERE driverId = ?',
       [driverId]
     );
 
@@ -271,7 +271,7 @@ class DriverController {
   listDrivers = (req, res) => {
     const drivers = this.db.query(`
       SELECT d.driverId, d.fullName, d.phone, d.email, d.rating, d.totalRatings, d.availabilityStatus, d.status,
-             d.batteryLevel, d.currentLocationName, d.latitude, d.longitude,
+             d.currentLocationName, d.latitude, d.longitude,
              v.licensePlate, v.brand, v.model, vt.typeName as vehicleType
       FROM drivers d
       LEFT JOIN vehicles v ON d.driverId = v.driverId

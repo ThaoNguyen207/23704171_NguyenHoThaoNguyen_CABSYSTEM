@@ -2,7 +2,7 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const { startServer } = require('../services/trip-service/src/index');
 
-describe('Trip Service Tests (UC04, UC13, UC14, UC15)', () => {
+describe('Trip Service Tests (UC04, UC13, UC14, UC15, Geocoding & Distance)', () => {
   let appInstance;
   const PORT = 3103;
   const baseUrl = `http://localhost:${PORT}`;
@@ -16,7 +16,29 @@ describe('Trip Service Tests (UC04, UC13, UC14, UC15)', () => {
     appInstance.server.close();
   });
 
-  it('UC04: Should create a new trip with Searching status (AC01.6)', async () => {
+  it('Should estimate route distance and calculate fares dynamically based on addresses', async () => {
+    const res = await fetch(`${baseUrl}/api/trips/estimate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pickupLocation: 'Tòa nhà Bitexco, Quận 1',
+        destination: 'Sân bay Tân Sơn Nhất, Tân Bình',
+        vehicleTypeId: 2
+      })
+    });
+
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.ok(body.distanceKm > 0, 'Distance should be calculated');
+    assert.ok(body.pickup.lat && body.pickup.lng);
+    assert.ok(body.destination.lat && body.destination.lng);
+    assert.ok(body.fares[1].totalFare > 0, 'Cab Bike fare calculated');
+    assert.ok(body.fares[2].totalFare > 0, 'Cab Car 4 fare calculated');
+    assert.ok(body.fares[3].totalFare > 0, 'Cab Car 7 fare calculated');
+    assert.ok(body.fares[3].totalFare > body.fares[2].totalFare, 'Car 7 should cost more than Car 4');
+  });
+
+  it('UC04: Should create a new trip with Searching status (AC01.6) and auto-calculate distance if omitted', async () => {
     const res = await fetch(`${baseUrl}/api/trips`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,8 +46,7 @@ describe('Trip Service Tests (UC04, UC13, UC14, UC15)', () => {
         customerId: 1,
         pickupLocation: 'Bến Thành, Quận 1',
         destination: 'Landmark 81, Bình Thạnh',
-        vehicleTypeId: 2,
-        distanceKm: 6.0
+        vehicleTypeId: 2
       })
     });
 
@@ -33,7 +54,8 @@ describe('Trip Service Tests (UC04, UC13, UC14, UC15)', () => {
     const body = await res.json();
     assert.ok(body.tripId);
     assert.strictEqual(body.status, 'Searching');
-    assert.ok(body.estimatedFare > 0);
+    assert.ok(body.distanceKm > 0, 'Distance should be automatically computed');
+    assert.ok(body.estimatedFare > 0, 'Fare should depend on distance');
     createdTripId = body.tripId;
   });
 

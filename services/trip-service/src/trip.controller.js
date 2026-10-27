@@ -1,5 +1,6 @@
 const { calculateFare } = require('./fare.calculator');
 const { sharedBus } = require('../../../shared/event-bus');
+const { getDistanceBetweenAddresses, geocodeAddress } = require('../../../shared/geo-helper');
 
 const getDriverServiceUrl = () => process.env.DRIVER_SERVICE_URL || 'http://localhost:3002';
 
@@ -7,6 +8,39 @@ class TripController {
   constructor(db) {
     this.db = db;
   }
+
+  // Dynamic route distance & fare estimation endpoint
+  estimateRoute = (req, res) => {
+    const { pickupLocation, destination, vehicleTypeId } = req.body;
+
+    if (!pickupLocation || !destination) {
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Vui lòng cung cấp cả điểm đón (pickupLocation) và điểm đến (destination)'
+      });
+    }
+
+    const routeInfo = getDistanceBetweenAddresses(pickupLocation, destination);
+    const distanceKm = routeInfo.distanceKm;
+
+    const bikeFare = calculateFare(1, distanceKm);
+    const car4Fare = calculateFare(2, distanceKm);
+    const car7Fare = calculateFare(3, distanceKm);
+
+    return res.status(200).json({
+      pickup: routeInfo.pickup,
+      destination: routeInfo.destination,
+      distanceKm,
+      estimatedDurationMins: car4Fare.estimatedDurationMins,
+      co2SavedKg: car4Fare.co2SavedKg,
+      fares: {
+        1: bikeFare,
+        2: car4Fare,
+        3: car7Fare
+      },
+      selectedFare: calculateFare(vehicleTypeId || 2, distanceKm)
+    });
+  };
 
   createTrip = async (req, res) => {
     const { customerId, pickupLocation, destination, vehicleTypeId, distanceKm, pickupLat, pickupLng, autoDispatch } = req.body;
@@ -21,9 +55,20 @@ class TripController {
 
     const cid = customerId ? Number(customerId) : 1;
     const vTypeId = Number(vehicleTypeId);
-    const estDistance = distanceKm ? Number(distanceKm) : 5.0;
 
-    const fareCalc = calculateFare(vTypeId, estDistance);
+    // Dynamic distance calculation based on input addresses if not explicitly passed
+    let finalDistanceKm = Number(distanceKm);
+    let resolvedPickup = { lat: Number(pickupLat), lng: Number(pickupLng) };
+
+    if (!finalDistanceKm || isNaN(finalDistanceKm) || finalDistanceKm <= 0) {
+      const geoResult = getDistanceBetweenAddresses(pickupLocation, destination);
+      finalDistanceKm = geoResult.distanceKm;
+      resolvedPickup = geoResult.pickup;
+    } else if (!resolvedPickup.lat || !resolvedPickup.lng) {
+      resolvedPickup = geocodeAddress(pickupLocation);
+    }
+
+    const fareCalc = calculateFare(vTypeId, finalDistanceKm);
 
     // Insert Trip with status Searching (1)
     const tripResult = this.db.run(
@@ -41,12 +86,12 @@ class TripController {
       [tripId, vTypeId, fareCalc.baseFare, fareCalc.distanceKm, fareCalc.totalFare]
     );
 
-    // Smart GPS Nearest Driver Matching (Xanh SM AI Dispatch)
+    // Smart GPS Nearest Driver Matching (Haversine radius)
     let candidateDriver = null;
     let allNearby = [];
     try {
-      const pLat = pickupLat || 10.7716;
-      const pLng = pickupLng || 106.7044;
+      const pLat = resolvedPickup.lat || 10.7716;
+      const pLng = resolvedPickup.lng || 106.7044;
       const resp = await fetch(`${getDriverServiceUrl()}/api/drivers/nearby?lat=${pLat}&lng=${pLng}&vehicleTypeId=${vTypeId}`);
       if (resp.ok) {
         allNearby = await resp.json();
@@ -55,18 +100,16 @@ class TripController {
         }
       }
     } catch {
-      // Fallback if driver service offline
       candidateDriver = {
         driverId: 88,
         fullName: 'Lê Văn Tài',
         phone: '0988888888',
         rating: 4.9,
-        model: 'VinFast VF 5 Plus',
+        model: 'Toyota Vios',
         licensePlate: '59A-12345',
         distanceKm: 1.2,
         etaMinutes: 3,
-        etaText: '3 phút (1.2 km)',
-        batteryLevel: 92
+        etaText: '3 phút (1.2 km)'
       };
     }
 
@@ -86,14 +129,12 @@ class TripController {
       vehicleTypeId: vTypeId,
       pickupLocation,
       destination,
+      distanceKm: finalDistanceKm,
       fareAmount: fareCalc.totalFare,
-      co2SavedKg: fareCalc.co2SavedKg,
       candidateDriver,
       allNearbyCount: allNearby.length
     });
 
-    // Auto-Accept Feature (Xanh SM Auto-Dispatch):
-    // If autoDispatch flag is enabled or true, simulate driver accepting within 1 second
     if (autoDispatch && candidateDriver) {
       setTimeout(() => {
         try {
@@ -108,10 +149,11 @@ class TripController {
       tripId,
       status: 'Searching',
       message: candidateDriver
-        ? `Đã tìm thấy tài xế Xanh SM gần nhất (${candidateDriver.fullName} - ${candidateDriver.model})`
+        ? `Đã tìm thấy tài xế phù hợp gần nhất (${candidateDriver.fullName} - ${candidateDriver.model})`
         : 'Yêu cầu đặt chuyến đã được tiếp nhận, đang tìm tài xế...',
+      distanceKm: finalDistanceKm,
       estimatedFare: fareCalc.totalFare,
-      co2SavedKg: fareCalc.co2SavedKg,
+      pickupCoords: resolvedPickup,
       candidateDriver,
       nearbyDriversCount: allNearby.length
     });
@@ -170,7 +212,6 @@ class TripController {
         [rejectReason || 'Tài xế đang bận', tripId, did]
       );
 
-      // Query already assigned drivers to avoid repeating
       const assigned = this.db.query('SELECT driverId FROM driver_assignments WHERE tripId = ?', [tripId]);
       const assignedIds = assigned.map(a => a.driverId);
 
@@ -225,6 +266,12 @@ class TripController {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Không tìm thấy chuyến xe' });
     }
 
+    // Business rule BRL11: status transition order enforcement
+    // 1: Searching -> 2: DriverAccepted
+    // 2: DriverAccepted -> 3: DriverArrived
+    // 3: DriverArrived -> 4: PassengerPickedUp
+    // 4: PassengerPickedUp -> 5: InProgress
+    // 5: InProgress -> 6: Completed
     const statusMap = {
       1: 'Searching',
       2: 'DriverAccepted',
@@ -278,7 +325,7 @@ class TripController {
     }
 
     if (trip.tripStatusId === 6) {
-      return res.status(400).json({ error: 'ALREADY_COMPLETED', message: 'Chuyến xe đã hoàn thành, không thể hủy' });
+      return res.status(400).json({ error: 'ALREADY_COMPLETED', message: 'Chuyến xe đã hoàn thành, không thể hủy (BRL11)' });
     }
 
     this.db.run(

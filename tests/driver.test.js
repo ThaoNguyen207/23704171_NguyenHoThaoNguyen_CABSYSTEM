@@ -2,7 +2,7 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const { startServer } = require('../services/driver-service/src/index');
 
-describe('Driver Service Tests (UC11, UC17, Xanh SM Fleet)', () => {
+describe('Driver Service Tests (UC11, UC17, Fleet Management)', () => {
   let appInstance;
   const PORT = 3102;
   const baseUrl = `http://localhost:${PORT}`;
@@ -38,14 +38,14 @@ describe('Driver Service Tests (UC11, UC17, Xanh SM Fleet)', () => {
     assert.strictEqual(res.status, 400);
   });
 
-  it('UC17: Should list driver vehicles with VinFast brand', async () => {
+  it('UC17: Should list driver vehicles with valid brand', async () => {
     const res = await fetch(`${baseUrl}/api/drivers/88/vehicles`);
     assert.strictEqual(res.status, 200);
     const vehicles = await res.json();
     assert.ok(Array.isArray(vehicles));
     assert.ok(vehicles.length > 0);
     assert.strictEqual(vehicles[0].licensePlate, '59A-12345');
-    assert.strictEqual(vehicles[0].brand, 'VinFast');
+    assert.strictEqual(vehicles[0].brand, 'Toyota');
   });
 
   it('Should query available drivers by vehicle type', async () => {
@@ -56,7 +56,7 @@ describe('Driver Service Tests (UC11, UC17, Xanh SM Fleet)', () => {
     assert.ok(drivers.some(d => d.driverId === 88));
   });
 
-  it('Should query nearby drivers using GPS coordinates (Xanh SM AI Dispatch)', async () => {
+  it('Should query nearby drivers using GPS coordinates (Haversine Dispatch)', async () => {
     const res = await fetch(`${baseUrl}/api/drivers/nearby?lat=10.7716&lng=106.7044&vehicleTypeId=2`);
     assert.strictEqual(res.status, 200);
     const nearby = await res.json();
@@ -67,7 +67,7 @@ describe('Driver Service Tests (UC11, UC17, Xanh SM Fleet)', () => {
     assert.ok(nearby[0].etaMinutes > 0);
   });
 
-  it('Should return full VinFast fleet for live radar (20+ vehicles)', async () => {
+  it('Should return full fleet for live map (20+ vehicles)', async () => {
     const res = await fetch(`${baseUrl}/api/drivers/fleet`);
     assert.strictEqual(res.status, 200);
     const fleet = await res.json();

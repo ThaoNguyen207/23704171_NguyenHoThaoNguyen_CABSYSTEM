@@ -16,7 +16,7 @@ const { startServer: startNotification } = require('../services/notification-ser
 const { startServer: startOperations } = require('../services/operations-service/src/index');
 const { startGateway } = require('../services/api-gateway/src/server');
 
-describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
+describe('Full End-to-End Microservices Integration Workflow', () => {
   let instances = [];
   const gatewayUrl = 'http://localhost:3200';
 
@@ -68,7 +68,7 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
       body: JSON.stringify({
         fullName: 'Nguyễn Hồ Thảo Nguyên',
         phone: '0987654321',
-        email: 'thaonguyen@xanhsm.vn',
+        email: 'thaonguyen@cab.vn',
         password: 'Password@2026'
       })
     });
@@ -101,7 +101,7 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
     assert.strictEqual(data.availabilityStatus, 'READY');
   });
 
-  it('Step 4: Customer books trip via API Gateway (Searching status & AI Dispatch)', async () => {
+  it('Step 4: Customer books trip with dynamic distance & nearest driver matching', async () => {
     const res = await fetch(`${gatewayUrl}/api/trips`, {
       method: 'POST',
       headers: {
@@ -110,12 +110,9 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
       },
       body: JSON.stringify({
         customerId,
-        pickupLocation: 'Tòa nhà Bitexco, Q.1',
-        destination: 'Sân bay Tân Sơn Nhất',
-        vehicleTypeId: 2,
-        distanceKm: 8.2,
-        pickupLat: 10.7716,
-        pickupLng: 106.7044
+        pickupLocation: 'Tòa nhà Bitexco, Quận 1',
+        destination: 'Sân bay Tân Sơn Nhất, Tân Bình',
+        vehicleTypeId: 2
       })
     });
 
@@ -123,8 +120,9 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
     const data = await res.json();
     assert.ok(data.tripId);
     assert.strictEqual(data.status, 'Searching');
-    assert.ok(data.estimatedFare > 0);
-    assert.ok(data.candidateDriver, 'Should match nearest available VinFast driver');
+    assert.ok(data.distanceKm > 0, 'Distance should be automatically computed based on locations');
+    assert.ok(data.estimatedFare > 0, 'Fare should be computed based on distance');
+    assert.ok(data.candidateDriver, 'Should match nearest available driver');
     tripId = data.tripId;
   });
 
@@ -177,13 +175,13 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
     assert.strictEqual(data.status, 'Completed');
   });
 
-  it('Step 7: Customer processes electronic payment for the trip', async () => {
+  it('Step 7: Customer processes electronic payment for completed trip (BRL12)', async () => {
     const res = await fetch(`${gatewayUrl}/api/trips/${tripId}/payments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         paymentMethodId: 2,
-        amount: 97500
+        amount: 106400
       })
     });
 
@@ -193,7 +191,7 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
     assert.ok(data.transactionCode);
   });
 
-  it('Step 8: Customer submits 5-star rating for driver', async () => {
+  it('Step 8: Customer submits 5-star rating for driver after completion (BRL14)', async () => {
     const res = await fetch(`${gatewayUrl}/api/trips/${tripId}/ratings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -201,7 +199,7 @@ describe('Full End-to-End Microservices Integration Workflow (Xanh SM)', () => {
         customerId,
         driverId: 88,
         score: 5,
-        comment: 'Xe VinFast VF 5 Plus chạy rất êm, tài xế lịch sự chu đáo!'
+        comment: 'Tài xế lái xe rất an toàn, phục vụ lịch sự và đúng giờ.'
       })
     });
 
