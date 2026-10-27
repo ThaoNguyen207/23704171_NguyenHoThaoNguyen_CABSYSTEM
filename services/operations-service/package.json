@@ -1,0 +1,9 @@
+{
+  "name": "cab-operations-service",
+  "version": "1.0.0",
+  "description": "Operations & Admin Service for CAB System",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}

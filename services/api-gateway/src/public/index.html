@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAB System - Microservices Control Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+    body {
+      background: #090d16;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+    .navbar {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+    }
+    .status-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .pill-up { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+    .pill-down { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+    }
+    .card-header {
+      background: #1f2937;
+      border-bottom: 1px solid #374151;
+      font-weight: 600;
+    }
+    .form-control, .form-select {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+      box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    }
+    .table-dark {
+      --bs-table-bg: #111827;
+      --bs-table-border-color: #1f2937;
+    }
+    .badge-trip-searching { background: #d97706; }
+    .badge-trip-accepted { background: #2563eb; }
+    .badge-trip-progress { background: #0891b2; }
+    .badge-trip-completed { background: #16a34a; }
+    .badge-trip-cancelled { background: #dc2626; }
+    .event-log-box {
+      background: #050811;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      height: 260px;
+      overflow-y: auto;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      padding: 10px;
+    }
+    .event-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #111827;
+    }
+    .btn-action {
+      border-radius: 6px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg px-4 py-3">
+    <div class="container-fluid">
+      <span class="navbar-brand text-light fw-bold">
+        <i class="fa-solid fa-taxi text-warning me-2"></i>CAB SYSTEM <span class="badge bg-primary ms-1">Microservices Architecture</span>
+      </span>
+      <div class="d-flex align-items-center gap-2">
+        <a href="/docs" class="btn btn-outline-info btn-sm"><i class="fa-solid fa-book me-1"></i>OpenAPI / Swagger</a>
+        <a href="/health" target="_blank" class="btn btn-outline-success btn-sm"><i class="fa-solid fa-heart-pulse me-1"></i>Health API</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Service Health Indicators -->
+  <div class="bg-dark bg-opacity-50 border-bottom border-secondary border-opacity-25 py-2 px-4">
+    <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="text-secondary small fw-bold text-uppercase"><i class="fa-solid fa-network-wired me-1"></i>Microservices Status:</span>
+      <div class="d-flex flex-wrap gap-2" id="healthPills">
+        <span class="status-pill pill-up" id="h-gateway">Gateway: 3000</span>
+        <span class="status-pill pill-up" id="h-customer">Customer: 3001</span>
+        <span class="status-pill pill-up" id="h-driver">Driver: 3002</span>
+        <span class="status-pill pill-up" id="h-trip">Trip: 3003</span>
+        <span class="status-pill pill-up" id="h-payment">Payment: 3004</span>
+        <span class="status-pill pill-up" id="h-notification">Notification: 3005</span>
+        <span class="status-pill pill-up" id="h-operations">Operations: 3006</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid p-4">
+    <div class="row g-4">
+      <!-- Left Column: Customer Booking & Driver Operations -->
+      <div class="col-lg-7">
+        <!-- 1. Customer Trip Booking -->
+        <div class="card mb-4 shadow">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-user me-2 text-info"></i>1. Khách Hàng Đặt Xe (UC04 / Trip Service :3003)</span>
+            <span class="badge bg-secondary" id="activeCustomerId">Customer #1</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label small text-secondary">Điểm đón (Pickup Location):</label>
+                <input type="text" id="pickupInput" class="form-control" value="Tòa nhà Bitexco, Q.1">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small text-secondary">Điểm đến (Destination):</label>
+                <input type="text" id="destInput" class="form-control" value="Sân bay Tân Sơn Nhất, Tân Bình">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small text-secondary">Khoảng cách:</label>
+                <input type="number" id="distanceInput" class="form-control" value="7.5" step="0.5">
+              </div>
+              <div class="col-md-8">
+                <label class="form-label small text-secondary">Loại phương tiện (Vehicle Type):</label>
+                <select id="vehicleTypeSelect" class="form-select">
+                  <option value="1">Xe 2 bánh (Motorbike) - Tiết kiệm & nhanh chóng</option>
+                  <option value="2" selected>Xe 4 bánh (Car 4-seat) - Tiêu chuẩn</option>
+                  <option value="3">Xe 7 bánh (Car 7-seat) - Rộng rãi gia đình</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-warning w-100 fw-bold" onclick="bookTrip()">
+                  <i class="fa-solid fa-paper-plane me-1"></i>Đặt Chuyến Ngay
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Trip Details Alert -->
+            <div id="activeTripBox" class="mt-3 p-3 rounded border border-primary bg-primary bg-opacity-10 d-none">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="text-info mb-1"><i class="fa-solid fa-route me-1"></i>Chuyến xe đang thực hiện: #<span id="currentTripId">--</span></h6>
+                  <p class="small text-secondary mb-0">
+                    Trạng thái: <span class="badge badge-trip-searching" id="currentTripStatus">Searching</span> | 
+                    Cước tạm tính: <strong class="text-warning" id="currentTripFare">--</strong> VNĐ
+                  </p>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="cancelTrip()">Hủy chuyến</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Driver Acceptance & Trip Execution -->
+        <div class="card mb-4 shadow">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-car me-2 text-warning"></i>2. Tài Xế Nhận Chuyến & Di Chuyển (Driver Service :3002)</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-secondary">Trạng thái tài xế #88:</span>
+              <button class="btn btn-sm btn-success" id="btnToggleDriverStatus" onclick="toggleDriverStatus()">READY</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-dark border border-secondary mb-3 d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Tài xế: Lê Văn Tài (#88)</strong> | Xe: 59A-12345 (Toyota Vios) | Đánh giá: <span class="text-warning">★ 4.9</span>
+                <div class="small text-secondary" id="driverIncomingTripNotice">Đang chờ chuyến xe mới...</div>
+              </div>
+              <div id="driverActionButtons" class="d-none">
+                <button class="btn btn-success btn-sm me-2" onclick="driverResponse('ACCEPT')"><i class="fa-solid fa-check me-1"></i>Chấp nhận (Accept)</button>
+                <button class="btn btn-danger btn-sm" onclick="driverResponse('REJECT')"><i class="fa-solid fa-xmark me-1"></i>Từ chối (Reject)</button>
+              </div>
+            </div>
+
+            <!-- Trip Status Progression Workflow -->
+            <div class="p-3 border border-secondary border-opacity-50 rounded bg-dark">
+              <h6 class="small text-uppercase text-secondary fw-bold mb-3"><i class="fa-solid fa-bars-progress me-1"></i>Tiến trình thực hiện chuyến xe (BRL11):</h6>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-outline-light btn-sm btn-action" id="step3" onclick="advanceTripStatus(3)">3. Tài xế đã đến (Arrived)</button>
+                <button class="btn btn-outline-light btn-sm btn-action" id="step4" onclick="advanceTripStatus(4)">4. Đã đón khách (Picked Up)</button>
+                <button class="btn btn-outline-light btn-sm btn-action" id="step5" onclick="advanceTripStatus(5)">5. Đang di chuyển (In Progress)</button>
+                <button class="btn btn-outline-success btn-sm btn-action" id="step6" onclick="advanceTripStatus(6)">6. Hoàn thành chuyến (Completed)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Payment & Rating -->
+        <div class="card shadow">
+          <div class="card-header">
+            <i class="fa-solid fa-credit-card me-2 text-success"></i>3. Thanh Toán & Đánh Giá (Payment Service :3004)
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small text-secondary">Phương thức thanh toán:</label>
+                <select id="paymentMethodSelect" class="form-select">
+                  <option value="1">1. Tiền mặt (Cash)</option>
+                  <option value="2" selected>2. Điện tử (Electronic Payment)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-secondary">Số tiền thanh toán (VNĐ):</label>
+                <input type="number" id="payAmountInput" class="form-control" value="85500" readonly>
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-success w-100 fw-bold" onclick="processPayment()">
+                  <i class="fa-solid fa-money-bill-wave me-1"></i>Xác Nhận Thanh Toán
+                </button>
+              </div>
+            </div>
+
+            <hr class="border-secondary my-3">
+
+            <!-- Rating form -->
+            <div class="row g-3 align-items-center">
+              <div class="col-md-3">
+                <label class="form-label small text-secondary">Đánh giá sao (1-5):</label>
+                <select id="ratingScoreSelect" class="form-select">
+                  <option value="5">★★★★★ (5 sao)</option>
+                  <option value="4">★★★★☆ (4 sao)</option>
+                  <option value="3">★★★☆☆ (3 sao)</option>
+                  <option value="2">★★☆☆☆ (2 sao)</option>
+                  <option value="1">★☆☆☆☆ (1 sao)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small text-secondary">Lời nhắn / Nhận xét:</label>
+                <input type="text" id="ratingCommentInput" class="form-control" placeholder="Tài xế lái xe an toàn, lịch sự...">
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-outline-warning w-100 fw-bold" onclick="submitRating()">
+                  <i class="fa-solid fa-star me-1"></i>Gửi Đánh Giá
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Operations CMS & Event Stream -->
+      <div class="col-lg-5">
+        <!-- Live Trip Monitoring CMS -->
+        <div class="card mb-4 shadow">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-desktop me-2 text-primary"></i>Operations CMS (UC28 / :3006)</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadAdminData()"><i class="fa-solid fa-rotate"></i></button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 220px;">
+              <table class="table table-dark table-hover table-sm mb-0">
+                <thead>
+                  <tr class="small text-secondary">
+                    <th>Trip ID</th>
+                    <th>Khách</th>
+                    <th>Tài xế</th>
+                    <th>Cước</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="tripsTableBody">
+                  <tr><td colspan="5" class="text-center text-secondary py-3">Đang tải danh sách...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions CMS -->
+        <div class="card mb-4 shadow">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-receipt me-2 text-success"></i>Lịch Sử Giao Dịch (UC30 / :3006)</span>
+            <span class="small text-secondary" id="totalRevenueBadge">Tổng thu: 0 VNĐ</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 180px;">
+              <table class="table table-dark table-hover table-sm mb-0">
+                <thead>
+                  <tr class="small text-secondary">
+                    <th>Mã GD</th>
+                    <th>Trip</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                  <tr><td colspan="4" class="text-center text-secondary py-3">Đang tải giao dịch...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live EventBus Stream -->
+        <div class="card shadow">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-bolt me-2 text-warning"></i>Microservices Event Stream (Pub/Sub)</span>
+            <button class="btn btn-outline-danger btn-sm" onclick="clearEventLogs()">Clear</button>
+          </div>
+          <div class="card-body p-2">
+            <div class="event-log-box" id="eventLogBox">
+              <div class="text-secondary">[Ready] Hệ thống đã khởi động. Lắng nghe các sự kiện microservices...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

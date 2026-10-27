@@ -1,0 +1,15 @@
+FROM node:26-alpine
+
+WORKDIR /app
+
+# Copy root shared modules and service directory
+COPY shared ./shared
+ARG SERVICE_DIR
+COPY ${SERVICE_DIR} ./service
+COPY API\ document ./API\ document
+
+WORKDIR /app/service
+
+EXPOSE 3000
+
+CMD ["node", "src/index.js"]

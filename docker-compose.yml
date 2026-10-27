@@ -1,0 +1,113 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/api-gateway
+    command: ["node", "src/server.js"]
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - CUSTOMER_SERVICE_URL=http://customer-service:3001
+      - DRIVER_SERVICE_URL=http://driver-service:3002
+      - TRIP_SERVICE_URL=http://trip-service:3003
+      - PAYMENT_SERVICE_URL=http://payment-service:3004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3005
+      - OPERATIONS_SERVICE_URL=http://operations-service:3006
+    depends_on:
+      - customer-service
+      - driver-service
+      - trip-service
+      - payment-service
+      - notification-service
+      - operations-service
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/customer-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+    volumes:
+      - cab_data:/app/data
+
+  driver-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/driver-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+    volumes:
+      - cab_data:/app/data
+
+  trip-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/trip-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DRIVER_SERVICE_URL=http://driver-service:3002
+    volumes:
+      - cab_data:/app/data
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/payment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - TRIP_SERVICE_URL=http://trip-service:3003
+      - DRIVER_SERVICE_URL=http://driver-service:3002
+    volumes:
+      - cab_data:/app/data
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/notification-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+    volumes:
+      - cab_data:/app/data
+
+  operations-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/operations-service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - TRIP_SERVICE_URL=http://trip-service:3003
+      - PAYMENT_SERVICE_URL=http://payment-service:3004
+      - DRIVER_SERVICE_URL=http://driver-service:3002
+      - CUSTOMER_SERVICE_URL=http://customer-service:3001
+    volumes:
+      - cab_data:/app/data
+
+volumes:
+  cab_data:

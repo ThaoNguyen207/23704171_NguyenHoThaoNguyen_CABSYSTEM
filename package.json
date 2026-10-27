@@ -1,0 +1,27 @@
+{
+  "name": "cab-system-microservices",
+  "version": "1.0.0",
+  "description": "CAB System - Microservices Architecture (Student 23704171)",
+  "main": "start-all.js",
+  "scripts": {
+    "start": "node start-all.js",
+    "test": "node --test tests/*.test.js",
+    "start:gateway": "node services/api-gateway/src/server.js",
+    "start:customer": "node services/customer-service/src/index.js",
+    "start:driver": "node services/driver-service/src/index.js",
+    "start:trip": "node services/trip-service/src/index.js",
+    "start:payment": "node services/payment-service/src/index.js",
+    "start:notification": "node services/notification-service/src/index.js",
+    "start:operations": "node services/operations-service/src/index.js"
+  },
+  "keywords": [
+    "cab-system",
+    "microservices",
+    "api-gateway",
+    "nodejs",
+    "sqlite",
+    "distributed-systems"
+  ],
+  "author": "Nguyen Ho Thao Nguyen (23704171)",
+  "license": "ISC"
+}

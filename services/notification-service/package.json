@@ -1,0 +1,9 @@
+{
+  "name": "cab-notification-service",
+  "version": "1.0.0",
+  "description": "Notification Service for CAB System",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}

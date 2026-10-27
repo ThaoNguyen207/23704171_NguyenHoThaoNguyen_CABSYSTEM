@@ -1,0 +1,9 @@
+{
+  "name": "cab-api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway and Reverse Proxy for CAB Microservices",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "cab-driver-service",
+  "version": "1.0.0",
+  "description": "Driver Service for CAB System",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}
